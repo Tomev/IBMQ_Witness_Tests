@@ -17,8 +17,6 @@ sys.path.insert(1, MODULE_FULL_PATH)
 
 
 def run_scripts():
-    backend_str = ""
-    generate_json_file(backend_str)
 
     jobs = []
     job_list_table = pd.DataFrame()
@@ -34,9 +32,6 @@ def run_scripts():
         job.add_witness_circuits(qubits_list)
         jobs.append(job)
 
-    save_to_log(LOG_FILE_NAME, "Circuits built")
-    save_to_log(LOG_FILE_NAME, "Adding jobs to queue...")
-
     i = 0
     job_list_path = f"{RESULTS_FOLDER_NAME}/job_list.csv"
 
@@ -49,7 +44,7 @@ def run_scripts():
         print(service.active_account())
         # backend = service.get_backend('ibm_brisbane')
         backend = service.get_backend("ibmq_qasm_simulator")
-        backend = GenericBackendV2(num_qubits=2)  # TR: For tests
+        # backend = GenericBackendV2(num_qubits=2)  # TR: For tests
 
         try:
             jobs[i].queued_job = backend.run(jobs[i].circuits, shots=N_SHOTS)
@@ -65,10 +60,6 @@ def run_scripts():
             job_list_table.to_csv(job_list_path)
         except Exception as alert:
             print(alert)
-            save_to_log(
-                LOG_FILE_NAME,
-                f"Error adding {str(i)} job to queue." f"Waiting for the next try...",
-            )
             time.sleep(WAIT_TIME)
         ndone = True
 
@@ -76,27 +67,17 @@ def run_scripts():
             time.sleep(WAIT_TIME)
             if jobs[i].update_status():
                 if jobs[i].last_status == "DONE" and not jobs[i].if_saved:
-                    save_to_log(
-                        LOG_FILE_NAME,
-                        f"{str(i)}. job status: DONE. Saving results to file...",
-                    )
                     filename = (
-                        f"{RESULTS_FOLDER_NAME}/results_tests_{str(i + 10 + 11)}.csv"
+                        f"{RESULTS_FOLDER_NAME}/results_tests_{str(i)}.csv"
                     )
                     jobs[i].save_to_file(filename, ZIP_FILE_NAME)
                     i += 1
                     ndone = False
                 elif jobs[i].last_status in ["ERROR", "CANCELLED"]:
-                    save_to_log(
-                        LOG_FILE_NAME, f"{str(i)}. job status: {jobs[i].last_status}"
-                    )
                     i += 1
                     ndone = False
 
     experiments_cleen_up(job_list_path)
-
-    save_to_log(LOG_FILE_NAME, "Program ended.")
-
 
 def main():
     print("Start")

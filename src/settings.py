@@ -5,7 +5,7 @@ This module contains settings for the project.
 from os import environ
 
 # IBMQ token environmental variables
-# naming convetion: IBMQ_Token_<TOKEN_ID>
+# naming convention: IBMQ_Token_<TOKEN_ID>
 TOKEN_VARIABLES = ["IBMQ_Token_TR", "IBMQ_Token_TR-CFT"]
 TOKENS = {key: environ[key] for key in TOKEN_VARIABLES}
 

@@ -8,7 +8,7 @@ import pandas as pd
 from numpy import pi
 from qiskit.circuit import Parameter, QuantumCircuit
 
-from src.utils import LOG_FILE_NAME, save_to_log
+from src.utils import LOG_FILE_NAME
 
 
 class Job:
@@ -368,5 +368,5 @@ class VivianiJob(WitnessJob):
 
         try:
             os.remove(csv_path)
-        except:
-            save_to_log(self.log_filename, f"Error removing {csv_path}")
+        except Exception as alert:
+            print(alert)
