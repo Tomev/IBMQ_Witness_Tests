@@ -9,7 +9,7 @@ import json
 import os
 from zipfile import ZipFile
 
-from src.settings import *
+from settings import *
 
 
 def save_to_log(filename: str, text: str) -> None:
@@ -54,7 +54,7 @@ def generate_json_file(backend: str):
         save_to_log(LOG_FILE_NAME, "Error removing json file")
 
 
-def experiments_cleen_up(job_list_path: str) -> None:
+def experiments_clean_up(job_list_path: str) -> None:
     with ZipFile(ZIP_FILE_NAME + ".zip", "a") as zip_file:
         zip_file.write(job_list_path, arcname="results/job_list.csv")
 

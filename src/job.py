@@ -8,7 +8,12 @@ import pandas as pd
 from numpy import pi
 from qiskit.circuit import Parameter, QuantumCircuit
 
-from src.utils import LOG_FILE_NAME, save_to_log
+from qiskit.primitives import PrimitiveResult
+
+from utils import LOG_FILE_NAME, save_to_log
+
+
+
 
 
 class Job:
@@ -32,6 +37,9 @@ class Job:
         self.log_filename = log_filename
 
     def add_test_circuits(self, test_number: int) -> None:
+        """
+        Sanity check test circuits.
+        """
         self.test_circuits_number = test_number
 
         circuit_test_0 = QuantumCircuit(1, 1)
@@ -41,7 +49,7 @@ class Job:
         circuit_test_1.x(0)
         circuit_test_1.measure(0, 0)
 
-        for j in range(0, test_number):
+        for _ in range(0, test_number):
             self.circuits.append(circuit_test_0)
             self.circuits.append(circuit_test_1)
 
@@ -57,6 +65,9 @@ class Job:
 
     # Zapis danych do pliku
     def save_to_file(self, csv_path, zip_filename):
+
+        results = self.get_counts_from_job_results(self.queued_job)
+
         results = self.queued_job.result().get_counts()
         tabela = pd.DataFrame.from_dict(results).fillna(0)
 
@@ -85,6 +96,46 @@ class Job:
             os.remove(csv_path)
         except:
             save_to_log(self.log_filename, f"Error removing {csv_path}")
+
+    @staticmethod
+    def get_counts_from_job_results(job):
+        """
+        Get counts from the job. 
+
+        Job results, returned by differently executed jobs (eg. by a sampler
+        or by a backend) have a different structure. This method is supposed
+        to be overwritten in the child classes, to provide a unified way of 
+        getting counts from the job results.
+        """
+        # TODO TR:  We might require some try-except block here, expecting
+        #           different types of job results.
+
+        results = job.result()
+        counts = []
+
+        # Check if type is PrimitiveResult
+        if isinstance(results, PrimitiveResult):
+            # This is for the case when the job is executed by a sampler.
+
+            #print(f"\n{results}\n")
+            #print(f"\n{results[0]}\n")
+            #print(f"\n{results[0].data}\n")
+
+            # TODO TR:  This assumes that the register is called "c". That
+            #           might not be the case for all the results.        
+
+            counts = []
+            
+            for result in results:
+                counts.append(result.data.c.get_counts())
+
+        else:
+            # This is for the case when the job is executed by a backend.
+            counts = results.get_counts()
+        
+        # print(f"\n{counts}\n")
+
+        return counts 
 
 
 class RotationJob(Job):
@@ -341,7 +392,7 @@ class VivianiJob(WitnessJob):
             self.indices_list.append(self.va)
 
     def save_to_file(self, csv_path, zip_filename):
-        result_counts = self.queued_job.result().get_counts()
+        result_counts = self.get_counts_from_job_results(self.queued_job)
         pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
         indices_i = []
         indices_j = []
