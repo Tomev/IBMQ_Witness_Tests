@@ -485,11 +485,19 @@ class VivianiJobSwap(WitnessJob):
             for i in range(len(self.qubits_lista)):
                 result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
         pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_j=[]
         indices_q=[]
         #qubits_list=self.qubits_list
-        for s in range(self.n_repetitions):
-            for q in range(len(self.qubits_list)):
+        for s in range(20*self.n_repetitions):
+            for q in range(len(self.qubits_lista)):
+                iva=self.indices_list[q][s][0]
+                ivb=self.indices_list[q][s][1]
+                indices_i.append(iva)
+                indices_j.append(ivb)
                 indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["j"] = indices_j
         pandas_table["q"] = indices_q
         
         # Saving to file
@@ -617,8 +625,7 @@ class BellJob(WitnessJob):
     def __init__(self) -> None:
         super().__init__()
         self.n_repetitions = 1
-        self.qubits_lista = []
-        self.qubits_listb = []
+        self.qubits_list = []
         self.qubits_dir = []
     @staticmethod
     def cx0(c: QuantumCircuit,i,j):
@@ -702,18 +709,6 @@ class BellJob(WitnessJob):
                 self.circuits[-1].sx(qubit-3)
                 self.circuits[-1].sx(qubit+3)
                 self.circuits[-1].measure([qubit-1,qubit-2,qubit-3,qubit+1,qubit+2,qubit+3],cr[i])
-
-    def _get_angles_lists(self):
-        for v in self.qubits_lista:
-            self.va = []
-            for n in range(self.n_repetitions):
-                for i in range(len(self.alphas)):
-                    for j in range(len(self.thetas)):
-                        self.va.append([i, j])
-
-            random.shuffle(self.va)
-            # print(*self.va)
-            self.indices_list.append(self.va)
     def update_status(self) -> bool:
         status_before_update = self.last_status
         try:
@@ -732,22 +727,14 @@ class BellJob(WitnessJob):
         result_counts=[]
         job_result = self.queued_job.result()
         for idx, pub_result in enumerate(job_result):
-            for i in range(len(self.qubits_lista)):
+            for i in range(len(self.qubits_list)):
                 result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
         pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
-        indices_i=[]
-        indices_j=[]
         indices_q=[]
         #qubits_list=self.qubits_list
-        for s in range(20*self.n_repetitions):
-            for q in range(len(self.qubits_lista)):
-                iva=self.indices_list[q][s][0]
-                ivb=self.indices_list[q][s][1]
-                indices_i.append(iva)
-                indices_j.append(ivb)
+        for s in range(self.n_repetitions):
+            for q in range(len(self.qubits_list)):
                 indices_q.append(q)
-        pandas_table["i"] = indices_i
-        pandas_table["j"] = indices_j
         pandas_table["q"] = indices_q
         
         # Saving to file
