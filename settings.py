@@ -8,11 +8,7 @@ from zipfile import ZipFile
 # IBMQ token environmental variables
 # naming convention: IBMQ_Token_<TOKEN_ID>
 # "IBMQ_Token_KM","IBMQ_Token_MS",
-TOKEN_VARIABLES = ["IBMQ_Token_AB","IBMQ_Token_KM","IBMQ_Token_MS","IBMQ_Token_EB","IBMQ_Token_TR",\
-                   "IBMQ_Token_TB","IBMQ_Token_JT","IBMQ_Token_JB","IBMQ_Token_HG","IBMQ_Token_KG",\
-                   "IBMQ_Token_ZB","IBMQ_Token_MB","IBMQ_Token_SG","IBMQ_Token_IG","IBMQ_Token_WB",\
-                   "IBMQ_Token_KB","IBMQ_Token_PB","IBMQ_Token_IB","IBMQ_Token_BB","IBMQ_Token_BZ",\
-                   "IBMQ_Token_TM","IBMQ_Token_PJ","IBMQ_Token_MK","IBMQ_Token_LM","IBMQ_Token_BC"]
+TOKEN_VARIABLES = ["IBMQ_Token_AB"]
 TOKENS = {key: environ[key] for key in TOKEN_VARIABLES}
 
 N_TEST_CIRCUITS = 0  # Number of test circuits at the beginning of the job.
