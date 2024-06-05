@@ -10,11 +10,6 @@ from qiskit.circuit import Parameter, QuantumCircuit
 
 from qiskit.primitives import PrimitiveResult
 
-from utils import LOG_FILE_NAME, save_to_log
-
-
-
-
 
 class Job:
     # TODO TR: Specify the types, just as in circuits.
@@ -26,7 +21,7 @@ class Job:
     test_circuits_number = None
     if_saved: bool = False
 
-    def __init__(self, log_filename=LOG_FILE_NAME) -> None:
+    def __init__(self) -> None:
         self.parameters_list = []
         self.circuits = []
         self.status = None
@@ -34,7 +29,6 @@ class Job:
         self.last_status = None
         self.test_circuits_number = None
         self.if_saved = False
-        self.log_filename = log_filename
 
     def add_test_circuits(self, test_number: int) -> None:
         """
@@ -94,8 +88,8 @@ class Job:
 
         try:
             os.remove(csv_path)
-        except:
-            save_to_log(self.log_filename, f"Error removing {csv_path}")
+        except Exception as alert:
+            print(alert)
 
     @staticmethod
     def get_counts_from_job_results(job):
@@ -266,8 +260,8 @@ class WitnessJob(Job):
 
         try:
             os.remove(csv_path)
-        except:
-            save_to_log(self.log_filename, f"Error removing {csv_path}")
+        except Exception as alert:
+            print(alert)
 
 
 class WitnessJobParameterized(WitnessJob):
@@ -337,8 +331,8 @@ class WitnessJobParameterized(WitnessJob):
 
         try:
             os.remove(csv_path)
-        except:
-            save_to_log(self.log_filename, f"Error removing {csv_path}")
+        except Exception as alert:
+            print(alert)
 
 
 class VivianiJob(WitnessJob):
@@ -419,5 +413,5 @@ class VivianiJob(WitnessJob):
 
         try:
             os.remove(csv_path)
-        except:
-            save_to_log(self.log_filename, f"Error removing {csv_path}")
+        except Exception as alert:
+            print(alert)
