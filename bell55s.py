@@ -16,7 +16,7 @@ from qiskit_aer import AerSimulator
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit.compiler import transpile, schedule
 import qiskit.pulse as pulse
-from jobsampler import BellJob
+from jobsampler import BellJobS
 from settings import *
 #from utils import *
 
@@ -31,11 +31,14 @@ def run_scripts():
     job_list_table = pd.DataFrame()
 
     # Job preparation
-    qubits_list=[3,29,40,67,78,105,116]
-    qubits_dir=[[1,0,1,1,1,1],[0,1,1,0,1,0],[0,0,1,1,1,1],[0,1,1,1,1,0],[0,1,1,0,1,0],[0,1,1,1,1,0],[0,0,1,1,0,1]]
+    #qubits_list=[2,123]
+    #qubits_dir=[[1, 0, 1, 1, 1],[0, 1, 1, 1, 1]]
+
+    qubits_list=[2,29,39,67,77,105,115]
+    qubits_dir=[[1, 0, 1, 1, 1],[1, 1, 0, 1, 0],[0, 0, 1, 1, 1],[1, 1, 1, 1, 0],[0, 1, 1, 0, 1],[1, 1, 1, 1, 0],[0, 0, 1, 1, 0]]
 
     for _ in range(N_JOBS):
-        job = BellJob()
+        job = BellJobS()
         job.n_repetitions = N_REPETITIONS
         # job.add_test_circuits(N_TEST_CIRCUITS)
         job.add_witness_circuits(qubits_list,qubits_dir)

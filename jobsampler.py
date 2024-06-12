@@ -748,3 +748,124 @@ class BellJob(WitnessJob):
             os.remove(csv_path)
         except Exception as alert:
             print(alert)
+class BellJobS(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+
+
+    def add_witness_circuits(self, qubits_list: List[int], qubits_dir: List[List[int]]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self.circuits.clear()
+        eta=np.arccos(1/np.sqrt(3))
+        for s in range(self.n_repetitions):
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(6, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                qubit=qubits_list[i]
+                di=qubits_dir[i]
+                self.circuits[-1].sx(qubit)
+                if di[2]:
+                    self.cx1(self.circuits[-1],qubit, qubit+1)
+                else:
+                    self.cx0(self.circuits[-1],qubit, qubit+1)
+                self.circuits[-1].rz(-np.pi/2,qubit+1)
+                self.circuits[-1].x(qubit+1)
+                if di[1]:
+                    self.cx0(self.circuits[-1],qubit,qubit-1)
+                else:
+                    self.cx1(self.circuits[-1],qubit,qubit-1)
+                if di[3]:
+                    self.cx1(self.circuits[-1],qubit+1,qubit+2)
+                else:
+                    self.cx0(self.circuits[-1],qubit+1,qubit+2)
+                self.circuits[-1].rz(np.pi/2,qubit)
+                self.circuits[-1].rz(np.pi/2,qubit+1)
+                self.circuits[-1].sx(qubit)
+                self.circuits[-1].sx(qubit+1)
+                self.circuits[-1].rz(-np.pi/4,qubit-1)
+                self.circuits[-1].rz(-np.pi/4,qubit+2)
+                self.circuits[-1].sx(qubit-2)
+                self.circuits[-1].sx(qubit+3)
+                self.circuits[-1].rz(eta,qubit-2)
+                self.circuits[-1].rz(eta,qubit+3)
+                if di[0]:
+                    self.cx1(self.circuits[-1],qubit-2,qubit-1)
+                else:
+                    self.cx0(self.circuits[-1],qubit-2,qubit-1)
+                if di[4]:
+                    self.cx0(self.circuits[-1],qubit+3,qubit+2)
+                else:
+                    self.cx1(self.circuits[-1],qubit+3,qubit+2)
+                self.circuits[-1].rz(np.pi/2,qubit-2)
+                self.circuits[-1].rz(np.pi/2,qubit+3)
+                self.circuits[-1].sx(qubit-2)
+                self.circuits[-1].sx(qubit+3)
+                self.circuits[-1].measure([qubit,qubit-1,qubit-2,qubit+1,qubit+2,qubit+3],cr[i])
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                indices_q.append(q)
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
