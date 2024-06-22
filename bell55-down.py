@@ -11,7 +11,7 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from qiskit_ibm_runtime.fake_provider import FakeBrisbane,FakeProviderForBackendV2
 from qiskit_aer import AerSimulator
-from jobsampler import BellJobS
+from jobsampler import BellJob
 from settings import *
 import json
 #from utils import *
@@ -24,13 +24,13 @@ def run_scripts():
 
     jobs = []
     job_list_table = pd.DataFrame()
-    qubits_list=[2,29,39,67,77,105,115]
-    qubits_dir=[[1, 0, 1, 1, 1],[1, 1, 0, 1, 0],[0, 0, 1, 1, 1],[1, 1, 1, 1, 0],[0, 1, 1, 0, 1],[1, 1, 1, 1, 0],[0, 0, 1, 1, 0]]
+    qubits_list=[3,28,40,66,78,104,116]
+    qubits_dir=[[1, 1, 1, 0, 1, 0],[1, 1, 0, 1, 0, 0],[1, 1, 0, 1, 0, 0],[1, 0, 1, 0, 1, 0],[1, 0, 1, 0, 0, 0],[0, 1, 1, 0, 1, 1],[0, 1, 0, 0, 0, 1]]
     job_list_path = f"{RESULTS_FOLDER_NAME}/job_list.csv"
     jobs = []
     job_id_table = pd.read_csv(job_list_path, index_col=0)
     for i in range(len(job_id_table)):
-        job = BellJobS()
+        job = BellJob()
         job.n_repetitions = N_REPETITIONS
         job.qubits_list=qubits_list
         job.qubits_dir=qubits_dir
@@ -41,7 +41,7 @@ def run_scripts():
         print(i)
     
     for i in range(len(jobs)):
-        #try:
+       # try:
         #    jobs[i].queued_job.cancel()
         #except:
         #    print("Canceled")

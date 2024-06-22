@@ -61,7 +61,7 @@ def std_dev(P: np.array, n: float) -> float:
 class BellResult:        
     def __init__(self, results_table: pd.DataFrame) -> None:
         self.raw_results = results_table
-        self.qq=7
+        self.qq=1
         
     def AppendResults(self, result: pd.DataFrame) -> None:
         self.raw_results = pd.concat([self.raw_results,pd.DataFrame(result)], ignore_index=True)
@@ -116,27 +116,29 @@ class BellResult:
         for i in range(5):
             for j in range(5):
                 if inx[i+j*5] in selected_row.keys():
-                    self.matrix[i,j]=selected_row[inn[i+j*5]].iloc[0]
+                    self.matrix[i,j]=selected_row[inx[i+j*5]].iloc[0]
         divsu = lambda i: i / su
         vdivsu = np.vectorize(divsu)
         return vdivsu(self.matrix)
             
     
         
-results_path = 'bell55multi/results'
+results_path = 'bell55multi/results-fake-sherbrooke'
 #results_path = 'belem-bell-dim21/wyniki'
 
 #'nairobi_bell_sim/wyniki'
 
 #metadata = load_json(results_path + '/data.json')
 summed_result = BellResult(pd.DataFrame())
-qq=7
+qq=1
 sd=[0 for i in range(qq)]
 ed=[0 for i in range(qq)]
 ssd=[[] for i in range(qq)]
+
+jobn=30
 ii=0
 
-for ih in range(54): #metadata["jobs"]):
+for ih in range(jobn): #metadata["jobs"]):
     pd_result = pd.read_csv(results_path + "/results_tests_" + str(ih) + ".csv", index_col=0)
     summed_result.AppendResults(pd_result)
     rr = BellResult(pd.DataFrame())
@@ -174,15 +176,26 @@ for zz in range(len(inn)):
     for xx in ind:
         if xx not in inn[zz]:
             innt.append(xx)
-    innd.append(innt)
+    vi=[0 for i in range(4)]
+    cc=0
     #print(*innt)
+    for xx in innt:
+        ff=int(xx[0])+int(xx[2])
+        ff%=2
+        vi[2*int(xx[1])+ff]+=1
+        if vi[2*int(xx[1])+ff]>1:
+            cc+=1
+            #print(*vi)
+    if cc<2:   
+        innd.append(innt)
+        #print(*innt)
 qqq=1
 for d in range(qq):
     mx=0
     mm=0
     for ina in innd:
         for inb in innd:
-        
+                    #inb=ina
                     P = summed_result.CalculateMatrix(d,ina,inb)
                     sdev,sdaux=std_dev(P,n)
                     ssig=np.linalg.det(P)/np.sqrt(sdev)
@@ -194,7 +207,7 @@ for d in range(qq):
                         sd[d]=0
                         ssd[d]=[]
                         ed[d]=0
-                        for ih in range(54): #metadata["jobs"]):
+                        for ih in range(jobn): #metadata["jobs"]):
                             pd_result = pd.read_csv(results_path + "/results_tests_" + str(ih) + ".csv", index_col=0)
                             rr = BellResult(pd.DataFrame())
                             rr.AppendResults(pd_result)
@@ -212,19 +225,37 @@ for d in range(qq):
                                 mm=ssiga
                             else:
                                 mm=-ssiga
-                            print("d: ",d)
-                            print(*ina)
-                            print(*inb)
-                        
-                            print('P =')
-                            print(P)
-                            print('Adj(P) =')
-                            print(adj(P))
-                            print('det(P) = ')
-                            print(np.linalg.det(P), '±', np.sqrt(std_dev(P,n)[0]),'sig',np.linalg.det(P)/np.sqrt(std_dev(P,n)[0]))
-                            print("avg: ",sd[d]/ii,'±',np.sqrt(ed[d])/ii,'sig',sd[d]/np.sqrt(ed[d]))
-                            print("cor: ",sdaux)
-                            for c in ssd[d]:
-                                print(c)
-
+                            inam=ina
+                            inbm=inb
+    P = summed_result.CalculateMatrix(d,inam,inbm)
+    sdev,sdaux=std_dev(P,n)
+    ssig=np.linalg.det(P)/np.sqrt(sdev)
+    sd[d]=0
+    ssd[d]=[]
+    ed[d]=0
+    for ih in range(jobn): #metadata["jobs"]):
+        pd_result = pd.read_csv(results_path + "/results_tests_" + str(ih) + ".csv", index_col=0)
+        rr = BellResult(pd.DataFrame())
+        rr.AppendResults(pd_result)
+        rr.SumResults()
+        ni=rr.Calculate()
+        PP = rr.CalculateMatrix(d,inam,inbm)
+        dd=np.linalg.det(PP)
+        sd[d]+=dd
+        ssd[d].append(dd)
+        stdc,ssaux=std_dev(PP,ni)
+        ed[d]+=stdc
+    print("d: ",d)
+    print(*inam)
+    print(*inbm)
+    print('P =')
+    print(P)
+    print('Adj(P) =')
+    print(adj(P))
+    print('det(P) = ')
+    print(np.linalg.det(P), '±', np.sqrt(std_dev(P,n)[0]),'sig',np.linalg.det(P)/np.sqrt(std_dev(P,n)[0]))
+    print("avg: ",sd[d]/ii,'±',np.sqrt(ed[d])/ii,'sig',sd[d]/np.sqrt(ed[d]))
+    print("cor: ",sdaux)
+    for c in ssd[d]:
+        print(c)
 

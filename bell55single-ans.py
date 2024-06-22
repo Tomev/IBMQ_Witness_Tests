@@ -74,8 +74,8 @@ class BellResult:
     def SumResults(self) -> None:
         self.raw_results = self.raw_results.groupby(["q"], as_index = False).sum()
     def CalculateMatrix(self,a,b,qubit) -> np.array:
-        ind1=["000","001","010","011","100","101","110","111"]
-        ind=["000","001","010","011","100","101","110","111"]
+        ind1=["000","100","010","110","001","101","011","111"]
+        ind=["000","100","010","110","001","101","011","111"]
         inn=[]
         for s in ind:
             for ss in ind1:
@@ -123,7 +123,7 @@ class BellResult:
             
     
         
-results_path = 'bell55multis/results'
+results_path = 'bell55multi/results'
 #results_path = 'belem-bell-dim21/wyniki'
 
 #'nairobi_bell_sim/wyniki'
@@ -136,7 +136,7 @@ ed=[[[0,0],[0,0]] for i in range(qq)]
 ssd=[[[[],[]],[[],[]]] for i in range(qq)]
 ii=0
 
-for ih in range(50): #metadata["jobs"]):
+for ih in range(30): #metadata["jobs"]):
     pd_result = pd.read_csv(results_path + "/results_tests_" + str(ih) + ".csv", index_col=0)
     summed_result.AppendResults(pd_result)
     rr = BellResult(pd.DataFrame())

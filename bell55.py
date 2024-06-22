@@ -31,14 +31,17 @@ def run_scripts():
     job_list_table = pd.DataFrame()
 
     # Job preparation
-    qubits_list=[3,29,40,67,78,105,116]
-    qubits_dir=[[1,0,1,1,1,1],[0,1,1,0,1,0],[0,0,1,1,1,1],[0,1,1,1,1,0],[0,1,1,0,1,0],[0,1,1,1,1,0],[0,0,1,1,0,1]]
-
-    for _ in range(N_JOBS):
+    #qubits_list=[3,116]
+    #qubits_dir=[[1, 1, 1, 0, 1, 0],[0, 1, 0, 0, 0, 1]]
+    
+    qubits_list=[3,28,40,66,78,104,116]
+    qubits_dir=[[1, 0, 1, 1, 1, 1],[1, 0, 1, 1, 0, 1],[0, 0, 1, 1, 1, 1],[0, 0, 1, 1, 1, 1],[0, 1, 1, 0, 1, 0],[0, 0, 1, 1, 1, 1],[0, 0, 1, 1, 0, 1]]
+    
+    for ix in range(N_JOBS):
         job = BellJob()
         job.n_repetitions = N_REPETITIONS
         # job.add_test_circuits(N_TEST_CIRCUITS)
-        job.add_witness_circuits(qubits_list,qubits_dir)
+        job.add_witness_circuits(qubits_list,qubits_dir,0)
         jobs.append(job)
     
     i = 0
@@ -62,12 +65,14 @@ def run_scripts():
     backend = service.get_backend('ibm_sherbrooke')
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
+    aer_sim = AerSimulator()
     print("pass manager",current_time)
     pm = generate_preset_pass_manager(backend=backend, optimization_level=0)
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     print("pass manager done",current_time)
-    isa_cir=pm.run(jobs[i].circuits)
+    isa_cir0=pm.run(jobs[0].circuits)
+    #isa_cir1=pm.run(jobs[1].circuits)
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     print("ISA",current_time)
@@ -100,7 +105,9 @@ def run_scripts():
         #t = time.localtime()
         #current_time = time.strftime("%H:%M:%S", t)
         #print("ISA",current_time)
+
         sampler = Sampler(backend=backend)
+        #sampler = Sampler(backend=aer_sim)
         #print(backend)
         #print(len(qubits_lista),len(qubits_listb),len(qubits_dir))
         #for x in range(len(qubits_lista)):
@@ -130,7 +137,10 @@ def run_scripts():
         #fig
         #break
         try:
-            jobs[i].queued_job = sampler.run(isa_cir, shots=N_SHOTS)
+            if i%2:
+                jobs[i].queued_job = sampler.run(isa_cir0, shots=N_SHOTS)
+            else:
+                jobs[i].queued_job = sampler.run(isa_cir0, shots=N_SHOTS)
             t = time.localtime()
             current_time = time.strftime("%H:%M:%S", t)
             print("job queued",current_time)
