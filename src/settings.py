@@ -5,8 +5,9 @@ This module contains settings for the project.
 from os import environ
 
 # IBMQ token environmental variables
-# naming convention: IBMQ_Token_<TOKEN_ID>
-TOKEN_VARIABLES = ["IBMQ_Token_TR", "IBMQ_Token_TR-CFT"]
+# naming convention: IBMQ_Token_<TOKEN_ID>; Remember that linux won't accept
+# '-' in the environmental variable name.
+TOKEN_VARIABLES = ["IBMQ_Token_TR", "IBMQ_Token_TR_CFT"]
 TOKENS = {key: environ[key] for key in TOKEN_VARIABLES}
 
 N_TEST_CIRCUITS = 0  # Number of test circuits at the beginning of the job.
@@ -21,3 +22,4 @@ DESCRIPTION = "Short description of a job"
 LOG_FILE_NAME = "log.txt"
 RESULTS_FOLDER_NAME = "results"
 ZIP_FILE_NAME = "results-wit-multi"
+JOB_TRACKER_FILE_NAME = "job_tracker.ckp"

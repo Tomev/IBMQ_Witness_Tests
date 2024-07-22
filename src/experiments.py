@@ -9,15 +9,26 @@ from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
 
 from qiskit_aer import AerSimulator
 
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+
 from job import Job, VivianiJob
 from utils import *
 
+from datetime import timedelta, datetime
+from tqdm import tqdm
 
 def enqueue_jobs():
-    backend_str: str = ""
-    # backend = service.get_backend('ibm_brisbane')
-    # backend = service.get_backend("ibmq_qasm_simulator")
-    backend = AerSimulator()
+
+    service = QiskitRuntimeService(
+            channel="ibm_quantum",
+            token=TOKENS[TOKEN_VARIABLES[0]],
+        )
+    #service = QiskitRuntimeService()
+
+    backend_str: str = "ibm_brisbane"
+    backend = service.get_backend(backend_str)
+    backend = AerSimulator().from_backend(backend)
+    #backend = service.get_backend("ibmq_qasm_simulator")
 
     jobs = []
     job_list_table = pd.DataFrame()
@@ -26,6 +37,7 @@ def enqueue_jobs():
     # qubits_list = [11, 18, 24, 67, 70, 77, 81, 96, 108, 120]
     qubits_list = [0, 1]  # TR: For tests
 
+    """
     for _ in range(N_JOBS):
         job: Job = VivianiJob()
         job.n_repetitions = N_REPETITIONS
@@ -33,8 +45,38 @@ def enqueue_jobs():
         job.add_witness_circuits(qubits_list)
         jobs.append(job)
 
+    isa_circuits = []
+
+    pass_manager = generate_preset_pass_manager(optimization_level=0, backend=backend)
+    start = datetime.now()
+    for job in tqdm(jobs):
+        for circuit in job.circuits:
+            isa_circuits.append(pass_manager.run(circuit))
+    print("Time to transpile: ", timedelta(seconds=(datetime.now() - start).seconds))
+
+    pass_manager = generate_preset_pass_manager(optimization_level=0, backend=backend)
+    start = datetime.now()
+    for circuit in tqdm(isa_circuits):
+        pass_manager.run(circuit)
+    print("Time to transpile ISA: ", timedelta(seconds=(datetime.now() - start).seconds))
+
+    # Return before running the jobs.
+    return 0
+    """
 
     i: int = 0
+
+    # TODO TR:  Might be better to do it with database at some point.
+    #           Or possibly with the environment variable.
+    if os.path.exists(JOB_TRACKER_FILE_NAME):
+        with open(JOB_TRACKER_FILE_NAME, "r") as file:
+            i = int(file.read())
+    else:
+        print("No file tracker found.")
+        
+    print(f"\t{i}")
+    return
+
     job_list_path: str = f"{RESULTS_FOLDER_NAME}/job_list.csv"
 
     while i < N_JOBS:
@@ -48,7 +90,8 @@ def enqueue_jobs():
 
         try:
             sampler = Sampler(backend=backend)
-            jobs[i].queued_job = sampler.run(jobs[i].circuits, shots=N_SHOTS)
+            jobs[i].queued_job = sampler.run(jobs[i].circuits, shots=N_SHOTS,
+            skip_transpilation=True)
 
             # print(jobs[i].queued_job)
             # jobs[i].queued_job = backend.run(jobs[i].circuits, shots=N_SHOTS)

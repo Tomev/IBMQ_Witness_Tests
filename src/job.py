@@ -30,6 +30,8 @@ class Job:
         self.test_circuits_number = None
         self.if_saved = False
 
+    
+
     def add_test_circuits(self, test_number: int) -> None:
         """
         Sanity check test circuits.
@@ -355,8 +357,8 @@ class VivianiJob(WitnessJob):
 
         self.circuits.clear()
         for s in range(20 * self.n_repetitions):
-            # self.circuits.append(QuantumCircuit(127, len(listvert)))
-            self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(127, len(qubits_list)))
+            # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
 
             for i, qubit in enumerate(qubits_list):
                 self.s_gate(
