@@ -183,12 +183,7 @@ class VivianiJob(WitnessJob):
 
         self.circuits.clear()
         for s in range(20 * self.n_repetitions):
-            #self.circuits.append(QuantumCircuit(127, len(listvert)))
-            cr=[]
-            cr=ClassicalRegister(1, "cr")
-            qreg = QuantumRegister(127)
-            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
-            self.circuits.append(QuantumCircuit(qreg, cr))
+            self.circuits.append(QuantumCircuit(20,1))
             
             self.s_gate(
                 self.circuits[-1], self.alphas[self.indices_list[s][0]], qubit
@@ -202,7 +197,7 @@ class VivianiJob(WitnessJob):
             self.s_gate(
                 self.circuits[-1], self.thetas[self.indices_list[s][1]], qubit
             )
-            self.circuits[-1].measure(qubit,cr)
+            self.circuits[-1].measure(qubit,0)
 
     def _get_angles_lists(self):
         self.va = []
@@ -216,7 +211,8 @@ class VivianiJob(WitnessJob):
         self.indices_list=self.va
 
     def save_to_file(self, csv_path, zip_filename):
-        result_counts = self.queued_job.result().get_counts()
+        result = self.queued_job.result()
+        result_counts=result.quasi_dists
         pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
         indices_i = []
         indices_j = []
@@ -252,18 +248,16 @@ class BellJob(WitnessJob,):
         self.circuits.clear()
         eta=np.arccos(1/np.sqrt(3))
         for s in range(self.n_repetitions):
-            cr=ClassicalRegister(6, "cr"))
-            qreg = QuantumRegister(127) #AQT pewnie 20
-            self.circuits.append(QuantumCircuit(qreg, cr))
+            self.circuits.append(QuantumCircuit(20, 6))
 
             self.circuits[-1].sx(qubit)
-            self.cx(self.circuits[-1],qubit, qubit+1)
-            self.cx(self.circuits[-1], qubit, qubit-1)
-            self.cx(self.circuits[-1], qubit-1, qubit)
+            self.circuits[-1].cx(qubit, qubit+1)
+            self.circuits[-1].cx(qubit, qubit-1)
+            self.circuits[-1].cx(qubit-1, qubit)
             self.circuits[-1].rz(-np.pi/2,qubit+1)
             self.circuits[-1].x(qubit+1)
-            self.cx(self.circuits[-1],qubit-1,qubit-2)
-            self.cx(self.circuits[-1],qubit+1,qubit+2)
+            self.circuits[-1].cx(qubit-1,qubit-2)
+            self.circuits[-1].cx(qubit+1,qubit+2)
             self.circuits[-1].rz(np.pi/2,qubit-1)
             self.circuits[-1].rz(np.pi/2,qubit+1)
             self.circuits[-1].sx(qubit-1)
@@ -278,14 +272,14 @@ class BellJob(WitnessJob,):
             self.circuits[-1].sx(qubit+3)
             self.circuits[-1].rz(np.pi/4,qubit-3)
             self.circuits[-1].rz(np.pi/4,qubit+3)
-            self.cx(self.circuits[-1],qubit-3,qubit-2)
-            self.cx(self.circuits[-1],qubit+3,qubit+2)
+            self.circuits[-1].cx(qubit-3,qubit-2)
+            self.circuits[-1].cx(qubit+3,qubit+2)
 
             self.circuits[-1].rz(np.pi/2,qubit-3)
             self.circuits[-1].rz(np.pi/2,qubit+3)
             self.circuits[-1].sx(qubit-3)
             self.circuits[-1].sx(qubit+3)
-            self.circuits[-1].measure([qubit-1,qubit-2,qubit-3,qubit+1,qubit+2,qubit+3],cr)
+            self.circuits[-1].measure([qubit-1,qubit-2,qubit-3,qubit+1,qubit+2,qubit+3],[0,1,2,3,4,5])
     def update_status(self) -> bool:
         status_before_update = self.last_status
         try:
@@ -301,10 +295,8 @@ class BellJob(WitnessJob,):
         return if_changed
 
     def save_to_file(self, csv_path, zip_filename):
-        result_counts=[]
-        job_result = self.queued_job.result()
-        for idx, pub_result in enumerate(job_result):
-            result_counts.append(getattr(pub_result.data, "cr").get_counts())
+        result = self.queued_job.result()
+        result_counts=result.quasi_dists
         pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
 
         

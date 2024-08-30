@@ -15,14 +15,32 @@ from qiskit_aer import AerSimulator
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit.compiler import transpile, schedule
 import qiskit.pulse as pulse
-from jobsampler import VivianiJob
-from settings import *
-#from utils import *
+from jobsampler_reduced import VivianiJob
+from qiskit import QuantumCircuit
+from os import environ,remove
 
-#MODULE_FULL_PATH = "/home/jovyan/"
-#sys.path.insert(1, MODULE_FULL_PATH)
+from qiskit_aqt_provider import AQTProvider
+from qiskit_aqt_provider.primitives import AQTSampler
+from zipfile import ZipFile
+
+RESULTS_FOLDER_NAME = "results"
+ZIP_FILE_NAME = "results-viv-aqt"
+N_SHOTS = 200
+N_REPETITIONS = 1
+WAIT_TIME = 30
+SHOULD_RANDOMIZE = True
+N_JOBS = 1
+
 def title_generator(program, device):
     return ''
+def experiments_cleen_up(job_list_path: str) -> None:
+    with ZipFile(ZIP_FILE_NAME + ".zip", "a") as zip_file:
+        zip_file.write(job_list_path, arcname="results/job_list.csv")
+
+    try:
+        remove(job_list_path)
+    except Exception as alert:
+        print(alert)
 
 def run_scripts():
 
@@ -38,32 +56,20 @@ def run_scripts():
         job.add_witness_circuits(qubit)
         jobs.append(job)
 
-    i = 8
-    job_list_path = f"{RESULTS_FOLDER_NAME}/job_list.csv"
-
+    i = 0
+    job_list_path = f"{RESULTS_FOLDER_NAME}/job_list_aqt.csv"
+    provider = AQTProvider("ACCESS_TOKEN")
+    backend = provider.get_backend("offline_simulator_no_noise")
+    sampler = AQTSampler(backend=backend)
+    sampler.set_transpile_options(optimization_level=0)
+    
     while i < N_JOBS:
-
-        service = QiskitRuntimeService(
-            channel="ibm_quantum",
-            token=TOKENS[TOKEN_VARIABLES[i % len(TOKEN_VARIABLES)]],
-        )
-        print(i)
-        print(service.active_account())
-        #backend = service.get_backend('ibm_brisbane')
-        backend = service.get_backend('ibm_sherbrooke')
-
-        pm = generate_preset_pass_manager(backend=backend, optimization_level=0)
-        sampler = Sampler(backend=backend)
-
-
         try:
-            isa_cir=pm.run(jobs[i].circuits)
-            jobs[i].queued_job = sampler.run(isa_cir, shots=N_SHOTS)
-
+            jobs[i].queued_job = sampler.run(jobs[i].circuits, shots=N_SHOTS)
             job_data = {
                 "job_id": jobs[i].queued_job.job_id(),
                 "pars": jobs[i].indices_list,
-                "token_id": TOKEN_VARIABLES[i % len(TOKEN_VARIABLES)].split("_")[-1]
+                #"token_id": TOKEN_VARIABLES[i % len(TOKEN_VARIABLES)].split("_")[-1]
             }
             job_list_table = pd.concat(
                 [job_list_table, pd.DataFrame([job_data])], ignore_index=True
