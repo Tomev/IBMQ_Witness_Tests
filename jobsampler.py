@@ -1256,11 +1256,11 @@ class BellSig(WitnessJob):
                 b=par//2
                 alpha=a*np.pi/2
                 beta=(2*b-1)*np.pi/4
-                self.circuits[-1].sx(qubit)
-                if di[0]:
-                    self.cx1(self.circuits[-1],qubit,qubit+1)
-                else:
-                    self.cx0(self.circuits[-1],qubit,qubit+1)
+                #self.circuits[-1].sx(qubit)
+                #if di[1]:
+                #    self.cx1(self.circuits[-1],qubit,qubit+1)
+                #else:
+                #    self.cx0(self.circuits[-1],qubit,qubit+1)
                 #if di[0]:
                 #    self.cx0(self.circuits[-1],qubit,qubit-1)
                 #    self.cx1(self.circuits[-1],qubit-1,qubit)
@@ -1273,11 +1273,11 @@ class BellSig(WitnessJob):
                 #else:
                 #    self.cx0(self.circuits[-1],qubit+1,qubit+2)
                 #    self.cx1(self.circuits[-1],qubit+2,qubit+1)
-                self.circuits[-1].rz(alpha, qubit)
+                self.circuits[-1].rz(alpha, qubit-1)
                 self.circuits[-1].rz(beta, qubit+1)
-                self.circuits[-1].sx(qubit)
+                self.circuits[-1].sx(qubit-1)
                 self.circuits[-1].sx(qubit+1)
-                self.circuits[-1].measure([qubit,qubit+1],cr[i])
+                self.circuits[-1].measure([qubit-1,qubit+1],cr[i])
 
     def _get_angles_lists(self):
         for v in self.qubits_list:
@@ -1312,6 +1312,1296 @@ class BellSig(WitnessJob):
         indices_q=[]
         #qubits_list=self.qubits_list
         for s in range(4*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class BellSigS(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Viviani optimized angles
+        self.alphas = [0, 0, 0, 0, 0]
+        self.betas = [pi / 4, -pi / 4, 3 * pi / 4, -3 * pi / 4, 0]
+        self.thetas = [0, 0, 0, 0]
+        self.phis = [-pi / 4, pi / 4, -3 * pi / 4, 3 * pi / 4]
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+
+
+    def add_witness_circuits(self, qubits_list: List[int],  qubits_dir: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(4 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(2, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                di=qubits_dir[i]
+                par=self.indices_list[i][s]
+                a=par%2
+                b=par//2
+                alpha=a*np.pi/2
+                beta=(2*b-1)*np.pi/4
+                #self.circuits[-1].sx(q[1])
+                #if di[1]:
+                #    self.cx1(self.circuits[-1],q[1],q[2])
+                #else:
+                #    self.cx0(self.circuits[-1],q[1],q[2])
+                #if di[0]:
+                #    self.cx0(self.circuits[-1],q[1],q[0])
+                #    self.cx1(self.circuits[-1],q[0],q[1])
+                #else:
+                #    self.cx1(self.circuits[-1],q[1],q[0])
+                #    self.cx0(self.circuits[-1],q[0],q[1])
+                #if di[2]:
+                #    self.cx1(self.circuits[-1],q[2],q[3])
+                #    self.cx0(self.circuits[-1],q[3],q[2])
+                #else:
+                #    self.cx0(self.circuits[-1],q[2],q[3])
+                #    self.cx1(self.circuits[-1],q[3],q[2])
+                self.circuits[-1].rz(alpha, q[0])
+                self.circuits[-1].rz(beta, q[2])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].measure([q[0],q[2]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(4):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(4*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class BellSigS6(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Viviani optimized angles
+        self.alphas = [0, 0, 0, 0, 0]
+        self.betas = [pi / 4, -pi / 4, 3 * pi / 4, -3 * pi / 4, 0]
+        self.thetas = [0, 0, 0, 0]
+        self.phis = [-pi / 4, pi / 4, -3 * pi / 4, 3 * pi / 4]
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(-3*np.pi/2,i)
+        c.rz(np.pi/2,j)
+    def sw0(self,c: QuantumCircuit,i,j):
+        #c.rz(-np.pi,j)
+        self.cx0(c,i,j)
+        self.cx1(c,j,i)
+    def sw1(self,c: QuantumCircuit,i,j):
+        self.cx1(c,i,j)
+        self.cx0(c,j,i)
+        
+
+
+    def add_witness_circuits(self, qubits_list: List[int],  qubits_dir: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(4 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(2, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                di=qubits_dir[i]
+                par=self.indices_list[i][s]
+                a=par%2
+                b=par//2
+                alpha=a*np.pi
+                #beta=b*np.pi/2
+                beta=(2*b-1)*np.pi/2
+                self.circuits[-1].sx(q[3])
+                if di[3]:
+                    self.cx1(self.circuits[-1],q[3],q[4])
+                else:
+                    self.cx0(self.circuits[-1],q[3],q[4])
+                if di[2]:
+                    self.sw0(self.circuits[-1],q[3],q[2])
+                else:
+                    self.sw1(self.circuits[-1],q[3],q[2])
+                if di[1]:
+                    self.sw0(self.circuits[-1],q[2],q[1])
+                else:
+                    self.sw1(self.circuits[-1],q[2],q[1])
+                if di[0]:
+                    self.sw0(self.circuits[-1],q[1],q[0])
+                else:
+                    self.sw1(self.circuits[-1],q[1],q[0])
+                if di[4]:
+                    self.sw1(self.circuits[-1],q[4],q[5])
+                else:
+                    self.sw0(self.circuits[-1],q[4],q[5])
+                if di[5]:
+                    self.sw1(self.circuits[-1],q[5],q[6])
+                else:
+                    self.sw0(self.circuits[-1],q[5],q[6])
+                if di[6]:
+                    self.sw1(self.circuits[-1],q[6],q[7])
+                else:
+                    self.sw0(self.circuits[-1],q[6],q[7])
+                self.circuits[-1].rz(alpha, q[0])
+                self.circuits[-1].rz(beta, q[7])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].sx(q[7])
+                self.circuits[-1].measure([q[0],q[7]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(4):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(4*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class BellSigSM(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Viviani optimized angles
+        self.alphas = [0, 0, 0, 0, 0]
+        self.betas = [pi / 4, -pi / 4, 3 * pi / 4, -3 * pi / 4, 0]
+        self.thetas = [0, 0, 0, 0]
+        self.phis = [-pi / 4, pi / 4, -3 * pi / 4, 3 * pi / 4]
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(-3*np.pi/2,i)
+        c.rz(np.pi/2,j)
+    def sw0(self,c: QuantumCircuit,i,j):
+        #c.rz(-np.pi,j)
+        self.cx0(c,i,j)
+        self.cx1(c,j,i)
+    def sw1(self,c: QuantumCircuit,i,j):
+        self.cx1(c,i,j)
+        self.cx0(c,j,i)
+        
+
+
+    def add_witness_circuits(self, qubits_list: List[int],  qubits_dir: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(4 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(2, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                di=qubits_dir[i]
+                par=self.indices_list[i][s]
+                a=par%2
+                b=par//2
+                alpha=a*np.pi/2
+                #beta=b*np.pi/2
+                beta=(2*b-1)*np.pi/4
+                nq=len(q)//2-1
+                self.circuits[-1].sx(q[nq])
+                if di[nq]:
+                    self.cx1(self.circuits[-1],q[nq],q[nq+1])
+                else:
+                    self.cx0(self.circuits[-1],q[nq],q[nq+1])
+                for z in reversed(range(nq)):
+                    if di[z]:
+                        self.sw0(self.circuits[-1],q[z+1],q[z])
+                    else:
+                        self.sw1(self.circuits[-1],q[z+1],q[z])
+                for z in range(nq+1,2*nq+1):  
+                    if di[z]:
+                        self.sw1(self.circuits[-1],q[z],q[z+1])
+                    else:
+                        self.sw0(self.circuits[-1],q[z],q[z+1])
+                self.circuits[-1].rz(alpha, q[0])
+                self.circuits[-1].rz(beta, q[-1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].sx(q[-1])
+                self.circuits[-1].measure([q[0],q[-1]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(4):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(4*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class BellSigS2(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Viviani optimized angles
+        self.alphas = [0, 0, 0, 0, 0]
+        self.betas = [pi / 4, -pi / 4, 3 * pi / 4, -3 * pi / 4, 0]
+        self.thetas = [0, 0, 0, 0]
+        self.phis = [-pi / 4, pi / 4, -3 * pi / 4, 3 * pi / 4]
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(-3*np.pi/2,i)
+        c.rz(np.pi/2,j)
+    def sw0(self,c: QuantumCircuit,i,j):
+        c.rz(-np.pi,j)
+        self.cx0(c,i,j)
+        self.cx1(c,j,i)
+    def sw1(self,c: QuantumCircuit,i,j):
+        self.cx1(c,i,j)
+        self.cx0(c,j,i)
+        
+
+
+    def add_witness_circuits(self, qubits_list: List[int],  qubits_dir: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(4 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(2, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                di=qubits_dir[i]
+                par=self.indices_list[i][s]
+                a=par%2
+                b=par//2
+                alpha=a*np.pi/2
+                beta=b*np.pi/2
+                #beta=(2*b-1)*np.pi/4
+                self.circuits[-1].sx(q[2])
+                if di[2]:
+                    self.cx1(self.circuits[-1],q[2],q[3])
+                else:
+                    self.cx0(self.circuits[-1],q[2],q[3])
+                if di[1]:
+                    self.sw0(self.circuits[-1],q[2],q[1])
+                else:
+                    self.sw1(self.circuits[-1],q[2],q[1])
+                if di[0]:
+                    self.sw0(self.circuits[-1],q[1],q[0])
+                else:
+                    self.sw1(self.circuits[-1],q[1],q[0])
+                if di[3]:
+                    self.sw1(self.circuits[-1],q[3],q[4])
+                else:
+                    self.sw0(self.circuits[-1],q[3],q[4])
+                self.circuits[-1].rz(alpha, q[0])
+                self.circuits[-1].rz(beta, q[4])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].sx(q[4])
+                self.circuits[-1].measure([q[0],q[4]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(4):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(4*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class SigS2(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Viviani optimized angles
+        self.alphas = [0, 0, 0, 0, 0]
+        self.betas = [pi / 4, -pi / 4, 3 * pi / 4, -3 * pi / 4, 0]
+        self.thetas = [0, 0, 0, 0]
+        self.phis = [-pi / 4, pi / 4, -3 * pi / 4, 3 * pi / 4]
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(-3*np.pi/2,i)
+        c.rz(np.pi/2,j)
+    def sw0(self,c: QuantumCircuit,i,j):
+        self.cx0(c,i,j)
+        self.cx1(c,j,i)
+    def sw1(self,c: QuantumCircuit,i,j):
+        self.cx1(c,i,j)
+        self.cx0(c,j,i)
+
+    def add_witness_circuits(self, qubits_list: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(4 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(2, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                par=self.indices_list[i][s]
+                a=par%2
+                b=par//2
+                alpha=a*np.pi/2
+                beta=(2*b-1)*np.pi/4
+                #self.circuits[-1].sx(q[0])
+                #self.circuits[-1].sx(q[1])
+                self.circuits[-1].rz(alpha, q[0])
+                self.circuits[-1].rz(beta, q[1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].measure([q[0],q[1]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(4):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(4*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class BellObj(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Viviani optimized angles
+        self.alphas = [0, 0, 0, 0, 0]
+        self.betas = [pi / 4, -pi / 4, 3 * pi / 4, -3 * pi / 4, 0]
+        self.thetas = [0, 0, 0, 0]
+        self.phis = [-pi / 4, pi / 4, -3 * pi / 4, 3 * pi / 4]
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+
+
+    def add_witness_circuits(self, qubits_list: List[int],  qubits_dir: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(4 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(6, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                di=qubits_dir[i]
+                par=self.indices_list[i][s]
+                a=par%2
+                b=par//2
+                alpha=a*np.pi/2
+                beta=(2*b-1)*np.pi/4
+                self.circuits[-1].sx(q[3])
+                if di[3]:
+                    self.cx1(self.circuits[-1],q[3],q[4])
+                else:
+                    self.cx0(self.circuits[-1],q[3],q[4])
+                if di[2]:
+                    self.cx1(self.circuits[-1],q[3],q[2])
+                    self.cx0(self.circuits[-1],q[2],q[3])
+                else:
+                    self.cx0(self.circuits[-1],q[3],q[2])
+                    self.cx1(self.circuits[-1],q[2],q[3])
+                self.circuits[-1].rz(alpha, q[2])
+                self.circuits[-1].rz(beta, q[4])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].sx(q[4])
+                self.circuits[-1].rz(-alpha, q[2])
+                self.circuits[-1].rz(-beta, q[4])
+                if di[0]:
+                    self.cx1(self.circuits[-1],q[2],q[0])
+                else:
+                    self.cx0(self.circuits[-1],q[2],q[0])
+                if di[1]:
+                    self.cx1(self.circuits[-1],q[2],q[1])
+                else:
+                    self.cx0(self.circuits[-1],q[2],q[1])
+                if di[4]:
+                    self.cx1(self.circuits[-1],q[4],q[5])
+                else:
+                    self.cx0(self.circuits[-1],q[4],q[5])
+                if di[5]:
+                    self.cx1(self.circuits[-1],q[4],q[6])
+                else:
+                    self.cx0(self.circuits[-1],q[4],q[6])
+                self.circuits[-1].measure([q[0],q[1],q[2],q[5],q[6],q[4]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(4):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(4*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class BellObjM(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Viviani optimized angles
+        self.alphas = [0, 0, 0, 0, 0]
+        self.betas = [pi / 4, -pi / 4, 3 * pi / 4, -3 * pi / 4, 0]
+        self.thetas = [0, 0, 0, 0]
+        self.phis = [-pi / 4, pi / 4, -3 * pi / 4, 3 * pi / 4]
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+        self.friends = []
+        self.friends_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+    def sw0(self,c: QuantumCircuit,i,j):
+        #c.rz(-np.pi,j)
+        self.cx0(c,i,j)
+        self.cx1(c,j,i)
+    def sw1(self,c: QuantumCircuit,i,j):
+        self.cx1(c,i,j)
+        self.cx0(c,j,i)
+
+
+    def add_witness_circuits(self, qubits_list: List[int],  qubits_dir: List[int], friends: List[int],  friends_dir: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self.friends = friends
+        self.friends_dir = friends_dir
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(4 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(6, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                di=qubits_dir[i]
+                f=friends[i]
+                fi=friends_dir[i]
+                if 2 in di:
+                    print("2222")
+                    return
+                if 2 in fi:
+                    print("2222")
+                    return
+                par=self.indices_list[i][s]
+                a=par%2
+                b=par//2
+                alpha=a*np.pi
+                beta=(2*b-1)*np.pi/2
+                nq=len(q)//2
+                self.circuits[-1].sx(q[nq])
+                if di[nq]:
+                    self.cx1(self.circuits[-1],q[nq],q[nq+1])
+                else:
+                    self.cx0(self.circuits[-1],q[nq],q[nq+1])
+                for z in reversed(range(nq)):
+                    if di[z]:
+                        self.sw0(self.circuits[-1],q[z+1],q[z])
+                    else:
+                        self.sw1(self.circuits[-1],q[z+1],q[z])
+                for z in range(nq+1,2*nq):  
+                    if di[z]:
+                        self.sw1(self.circuits[-1],q[z],q[z+1])
+                    else:
+                        self.sw0(self.circuits[-1],q[z],q[z+1])
+                self.circuits[-1].rz(alpha, q[0])
+                self.circuits[-1].rz(beta, q[-1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].sx(q[-1])
+                self.circuits[-1].rz(-alpha, q[0])
+                self.circuits[-1].rz(-beta, q[-1])
+                if fi[0]:
+                    self.cx1(self.circuits[-1],q[0],f[0])
+                else:
+                    self.cx0(self.circuits[-1],q[0],f[0])
+                if fi[1]:
+                    self.cx1(self.circuits[-1],q[0],f[1])
+                else:
+                    self.cx0(self.circuits[-1],q[0],f[1])
+                if fi[2]:
+                    self.cx1(self.circuits[-1],q[-1],f[2])
+                else:
+                    self.cx0(self.circuits[-1],q[-1],f[2])
+                if fi[3]:
+                    self.cx1(self.circuits[-1],q[-1],f[3])
+                else:
+                    self.cx0(self.circuits[-1],q[-1],f[3])
+                self.circuits[-1].measure([f[0],f[1],q[0],f[2],f[3],q[-1]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(4):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(4*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class I3322(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+    def sw0(self,c: QuantumCircuit,i,j):
+        #c.rz(-np.pi,j)
+        self.cx0(c,i,j)
+        self.cx1(c,j,i)
+    def sw1(self,c: QuantumCircuit,i,j):
+        self.cx1(c,i,j)
+        self.cx0(c,j,i)
+
+
+    def add_witness_circuits(self, qubits_list: List[int],  qubits_dir: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(9 * self.n_repetitions):
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(2, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                di=qubits_dir[i]
+                if 2 in di:
+                    print("2222")
+                    return
+                par=self.indices_list[i][s]
+                a=par%3
+                b=par//3
+                alpha=2*a*np.pi/3
+                beta=(3-4*b)*np.pi/6
+                nq=len(q)//2
+                self.circuits[-1].sx(q[nq])
+                if di[nq]:
+                    self.cx1(self.circuits[-1],q[nq],q[nq+1])
+                else:
+                    self.cx0(self.circuits[-1],q[nq],q[nq+1])
+                for z in reversed(range(nq)):
+                    if di[z]:
+                        self.sw0(self.circuits[-1],q[z+1],q[z])
+                    else:
+                        self.sw1(self.circuits[-1],q[z+1],q[z])
+                for z in range(nq+1,len(q)-1):  
+                    if di[z]:
+                        self.sw1(self.circuits[-1],q[z],q[z+1])
+                    else:
+                        self.sw0(self.circuits[-1],q[z],q[z+1])
+                self.circuits[-1].rz(alpha, q[0])
+                self.circuits[-1].rz(beta, q[-1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].sx(q[-1])
+
+                self.circuits[-1].measure([q[0],q[-1]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(9):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(9*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class tele(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+        self.qubits_dir = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.x(i)
+        c.sx(j)
+        c.ecr(i,j)
+        c.rz(np.pi/2,i)
+    @staticmethod
+    def cx1(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,i)
+        c.rz(-np.pi/2,j)
+        c.sx(i)
+        c.rz(np.pi/2,i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j,i)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(np.pi/2,i)
+        c.rz(np.pi/2,j)
+    def sw0(self,c: QuantumCircuit,i,j):
+        #c.rz(-np.pi,j)
+        self.cx0(c,i,j)
+        self.cx1(c,j,i)
+    def sw1(self,c: QuantumCircuit,i,j):
+        self.cx1(c,i,j)
+        self.cx0(c,j,i)
+
+
+    def add_witness_circuits(self, qubits_list: List[int],  qubits_dir: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self.qubits_dir = qubits_dir
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(3 * self.n_repetitions):
+            cr=[]
+            cra=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(3, "cr"+str(i)))
+            qreg = QuantumRegister(127)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                di=qubits_dir[i]
+                if 2 in di:
+                    print("2222")
+                    return
+                par=self.indices_list[i][s]
+                if par==0:
+                    self.circuits[-1].sx(q[0])
+                elif par==1:
+                    self.circuits[-1].rz(np.pi/2, q[0])
+                    self.circuits[-1].sx(q[0])
+                    self.circuits[-1].rz(-np.pi/2, q[0])
+                self.circuits[-1].rz(np.pi/2, q[1])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].rz(np.pi/2, q[1])
+                if di[1]:
+                    self.cx1(self.circuits[-1],q[1],q[2])
+                else:
+                    self.cx0(self.circuits[-1],q[1],q[2])
+                if di[0]:
+                    self.cx1(self.circuits[-1],q[0],q[1])
+                else:
+                    self.cx0(self.circuits[-1],q[0],q[1])
+                self.circuits[-1].rz(np.pi/2, q[0])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].rz(np.pi/2, q[0])
+                self.circuits[-1].measure([q[0],q[1]],cr[i][:2])
+                with  self.circuits[-1].if_test((cr[i][1],1)):
+                    self.circuits[-1].x(q[2])
+                    
+                with  self.circuits[-1].if_test((cr[i][0],1)):
+                    self.circuits[-1].z(q[2])
+                if par==0:
+                    self.circuits[-1].z(q[2])
+                    self.circuits[-1].sx(q[2])
+                    self.circuits[-1].z(q[2])
+                elif par==1:
+                    self.circuits[-1].z(q[2])
+                    self.circuits[-1].rz(np.pi/2, q[2])
+                    self.circuits[-1].sx(q[2])
+                    self.circuits[-1].rz(-np.pi/2, q[2])
+                    self.circuits[-1].z(q[2])
+                self.circuits[-1].measure(q[2],cr[i][2])
+                
+
+                
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(3):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(3*self.n_repetitions):
             for q in range(len(self.qubits_list)):
                 iva=self.indices_list[q][s]
                 indices_i.append(iva)
