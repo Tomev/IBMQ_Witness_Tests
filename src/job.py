@@ -1,20 +1,19 @@
 """
 This script stores our Job classes. 
 """
+
 import os
 import random
+from abc import abstractmethod
 from typing import Dict, List
 from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
 from numpy import pi
-from qiskit.circuit import Parameter, QuantumCircuit
-from abc import abstractmethod
-
-from qiskit.primitives import PrimitiveResult
-
 from qiskit import ClassicalRegister, QuantumRegister
+from qiskit.circuit import Parameter, QuantumCircuit
+from qiskit.primitives import PrimitiveResult
 
 
 class Job:
@@ -36,7 +35,6 @@ class Job:
         self.test_circuits_number = None
         self.if_saved = False
 
-    
     def add_sanity_test_circuits(self, test_number: int) -> None:
         """
         Sanity check test circuits.
@@ -53,7 +51,6 @@ class Job:
         for _ in range(0, test_number):
             self.circuits.append(circuit_test_0)
             self.circuits.append(circuit_test_1)
-
 
     def update_status(self):
         status_before_update = self.last_status
@@ -102,11 +99,11 @@ class Job:
     @staticmethod
     def get_counts_from_job_results(job):
         """
-        Get counts from the job. 
+        Get counts from the job.
 
         Job results, returned by differently executed jobs (eg. by a sampler
         or by a backend) have a different structure. This method is supposed
-        to be overwritten in the child classes, to provide a unified way of 
+        to be overwritten in the child classes, to provide a unified way of
         getting counts from the job results.
         """
         # TODO TR:  We might require some try-except block here, expecting
@@ -119,25 +116,25 @@ class Job:
         if isinstance(results, PrimitiveResult):
             # This is for the case when the job is executed by a sampler.
 
-            #print(f"\n{results}\n")
-            #print(f"\n{results[0]}\n")
-            #print(f"\n{results[0].data}\n")
+            # print(f"\n{results}\n")
+            # print(f"\n{results[0]}\n")
+            # print(f"\n{results[0].data}\n")
 
             # TODO TR:  This assumes that the register is called "c". That
-            #           might not be the case for all the results.        
+            #           might not be the case for all the results.
 
             counts = []
-            
+
             for result in results:
                 counts.append(result.data.c.get_counts())
 
         else:
             # This is for the case when the job is executed by a backend.
             counts = results.get_counts()
-        
+
         # print(f"\n{counts}\n")
 
-        return counts 
+        return counts
 
 
 class RotationJob(Job):
@@ -344,7 +341,7 @@ class WitnessJobParameterized(WitnessJob):
 
 
 class VivianiJob(WitnessJob):
-    
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -428,8 +425,9 @@ class VivianiJob(WitnessJob):
 
 class TestJob(Job):
     """
-    An abstract class for Test jobs. 
+    An abstract class for Test jobs.
     """
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -439,72 +437,71 @@ class TestJob(Job):
         Adds test circuits to the job.
         """
         raise NotImplementedError
-    
+
 
 class Weak(TestJob):
     def __init__(self) -> None:
         super().__init__()
-        self.ep=0
+        self.ep = 0
         self.indices_list = []
         self.n_repetitions = 1
         self.qubits_list = []
         self.qubits_dir = []
-    
+
     @staticmethod
-    def we(c: QuantumCircuit,i,j,eps):
-        c.ecr(i,j)
-        c.rz(eps,j)
-        c.ecr(i,j)
-        c.rz(np.pi/2,j)
+    def we(c: QuantumCircuit, i, j, eps):
+        c.ecr(i, j)
+        c.rz(eps, j)
+        c.ecr(i, j)
+        c.rz(np.pi / 2, j)
         c.sx(j)
 
-
-    def add_test_circuits(self, qubits_list: List[int],epp) -> None:
+    def add_test_circuits(self, qubits_list: List[int], epp) -> None:
         self.qubits_list = qubits_list
         self._get_angles_lists()
-        self.ep=epp
+        self.ep = epp
 
         self.circuits.clear()
         for s in range(8 * self.n_repetitions):
-            #self.circuits.append(QuantumCircuit(127, len(listvert)))
-            cr=[]
+            # self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr = []
             for i in range(len(qubits_list)):
-                cr.append(ClassicalRegister(3, "cr"+str(i)))
+                cr.append(ClassicalRegister(3, "cr" + str(i)))
             qreg = QuantumRegister(127)
-            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
-                q=qubits_list[i]
-                par=self.indices_list[i][s]
-                a=par%2
-                b=(par//2)%2
-                c=par//4
-                alpha=(2*a-1)*epp
-                beta=(2*b-1)*epp
-                
-                if c:
-                    self.we(self.circuits[-1],q[0],q[1],alpha)
-                    self.circuits[-1].rz(np.pi/2,q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi/2,q[0])
-                    self.we(self.circuits[-1],q[0],q[2],beta)
-                    self.circuits[-1].rz(-np.pi/2,q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi/2,q[0])
-                else:                   
-                    self.circuits[-1].rz(np.pi/2,q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi/2,q[0])
-                    self.we(self.circuits[-1],q[0],q[2],beta)
-                    self.circuits[-1].rz(-np.pi/2,q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi/2,q[0])
-                    self.we(self.circuits[-1],q[0],q[1],alpha) 
+                q = qubits_list[i]
+                par = self.indices_list[i][s]
+                a = par % 2
+                b = (par // 2) % 2
+                c = par // 4
+                alpha = (2 * a - 1) * epp
+                beta = (2 * b - 1) * epp
 
-                self.circuits[-1].rz(np.pi/2,q[0])
+                if c:
+                    self.we(self.circuits[-1], q[0], q[1], alpha)
+                    self.circuits[-1].rz(np.pi / 2, q[0])
+                    self.circuits[-1].sx(q[0])
+                    self.circuits[-1].rz(-np.pi / 2, q[0])
+                    self.we(self.circuits[-1], q[0], q[2], beta)
+                    self.circuits[-1].rz(-np.pi / 2, q[0])
+                    self.circuits[-1].sx(q[0])
+                    self.circuits[-1].rz(np.pi / 2, q[0])
+                else:
+                    self.circuits[-1].rz(np.pi / 2, q[0])
+                    self.circuits[-1].sx(q[0])
+                    self.circuits[-1].rz(-np.pi / 2, q[0])
+                    self.we(self.circuits[-1], q[0], q[2], beta)
+                    self.circuits[-1].rz(-np.pi / 2, q[0])
+                    self.circuits[-1].sx(q[0])
+                    self.circuits[-1].rz(np.pi / 2, q[0])
+                    self.we(self.circuits[-1], q[0], q[1], alpha)
+
+                self.circuits[-1].rz(np.pi / 2, q[0])
                 self.circuits[-1].sx(q[0])
-                self.circuits[-1].rz(-np.pi/2,q[0])
-                self.circuits[-1].measure([q[0],q[1],q[2]],cr[i])
+                self.circuits[-1].rz(-np.pi / 2, q[0])
+                self.circuits[-1].measure([q[0], q[1], q[2]], cr[i])
 
     def _get_angles_lists(self):
         for v in self.qubits_list:
@@ -520,83 +517,83 @@ class LG(TestJob):
 
     def __init__(self) -> None:
         super().__init__()
-        self.ep=0
+        self.ep = 0
         self.indices_list = []
         self.n_repetitions = 1
         self.qubits_list = []
         self.qubits_dir = []
 
     @staticmethod
-    def we(c: QuantumCircuit,i,j,eps):
-        c.ecr(i,j)
-        c.rz(eps,j)
-        c.ecr(i,j)
-        c.rz(np.pi/2,j)
+    def we(c: QuantumCircuit, i, j, eps):
+        c.ecr(i, j)
+        c.rz(eps, j)
+        c.ecr(i, j)
+        c.rz(np.pi / 2, j)
         c.sx(j)
 
-    def add_test_circuits(self, qubits_list: List[int],epp) -> None:
+    def add_test_circuits(self, qubits_list: List[int], epp) -> None:
         self.qubits_list = qubits_list
         self._get_angles_lists()
-        self.ep=epp
+        self.ep = epp
 
         self.circuits.clear()
         for s in range(8 * self.n_repetitions):
-            #self.circuits.append(QuantumCircuit(127, len(listvert)))
-            cr=[]
+            # self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr = []
             for i in range(len(qubits_list)):
-                cr.append(ClassicalRegister(3, "cr"+str(i)))
+                cr.append(ClassicalRegister(3, "cr" + str(i)))
             qreg = QuantumRegister(127)
-            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
-                q=qubits_list[i]
-                par=self.indices_list[i][s]
-                a=par%2
-                b=(par//2)%2
-                c=par//4
-                alpha=(2*a-1)*epp
-                beta=(2*b-1)*epp
-                aa=np.pi/4
-                bb=-np.pi/4
-                self.circuits[-1].rz(np.pi/2,q[0])
+                q = qubits_list[i]
+                par = self.indices_list[i][s]
+                a = par % 2
+                b = (par // 2) % 2
+                c = par // 4
+                alpha = (2 * a - 1) * epp
+                beta = (2 * b - 1) * epp
+                aa = np.pi / 4
+                bb = -np.pi / 4
+                self.circuits[-1].rz(np.pi / 2, q[0])
                 self.circuits[-1].sx(q[0])
-                self.circuits[-1].rz(-np.pi/2,q[0])
-                
+                self.circuits[-1].rz(-np.pi / 2, q[0])
+
                 if c:
                     self.circuits[-1].rz(np.pi / 2 + aa, q[0])
                     self.circuits[-1].sx(q[0])
                     self.circuits[-1].rz(-np.pi / 2 - aa, q[0])
-                    self.we(self.circuits[-1], q[0] , q[1] , alpha)
+                    self.we(self.circuits[-1], q[0], q[1], alpha)
                     self.circuits[-1].rz(-np.pi / 2 + aa, q[0])
                     self.circuits[-1].sx(q[0])
                     self.circuits[-1].rz(np.pi / 2 - aa, q[0])
                     self.circuits[-1].rz(np.pi / 2 + bb, q[0])
                     self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi/2-bb,q[0])
-                    self.we(self.circuits[-1],q[0],q[2],beta)
-                    self.circuits[-1].rz(-np.pi/2+bb,q[0])
+                    self.circuits[-1].rz(-np.pi / 2 - bb, q[0])
+                    self.we(self.circuits[-1], q[0], q[2], beta)
+                    self.circuits[-1].rz(-np.pi / 2 + bb, q[0])
                     self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi/2-bb,q[0])
+                    self.circuits[-1].rz(np.pi / 2 - bb, q[0])
                 else:
-                    self.circuits[-1].rz(np.pi/2+bb,q[0])
+                    self.circuits[-1].rz(np.pi / 2 + bb, q[0])
                     self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi/2-bb,q[0])
-                    self.we(self.circuits[-1],q[0],q[2],beta)
-                    self.circuits[-1].rz(-np.pi/2+bb,q[0])
+                    self.circuits[-1].rz(-np.pi / 2 - bb, q[0])
+                    self.we(self.circuits[-1], q[0], q[2], beta)
+                    self.circuits[-1].rz(-np.pi / 2 + bb, q[0])
                     self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi/2-bb,q[0])
-                    self.circuits[-1].rz(np.pi/2+aa,q[0])
+                    self.circuits[-1].rz(np.pi / 2 - bb, q[0])
+                    self.circuits[-1].rz(np.pi / 2 + aa, q[0])
                     self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi/2-aa,q[0])
-                    self.we(self.circuits[-1],q[0],q[1],alpha)
-                    self.circuits[-1].rz(-np.pi/2+aa,q[0])
+                    self.circuits[-1].rz(-np.pi / 2 - aa, q[0])
+                    self.we(self.circuits[-1], q[0], q[1], alpha)
+                    self.circuits[-1].rz(-np.pi / 2 + aa, q[0])
                     self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi/2-aa,q[0])     
-                
-                self.circuits[-1].rz(np.pi/2,q[0])
+                    self.circuits[-1].rz(np.pi / 2 - aa, q[0])
+
+                self.circuits[-1].rz(np.pi / 2, q[0])
                 self.circuits[-1].sx(q[0])
-                self.circuits[-1].rz(-np.pi/2,q[0])
-                self.circuits[-1].measure([q[0],q[1],q[2]],cr[i])
+                self.circuits[-1].rz(-np.pi / 2, q[0])
+                self.circuits[-1].measure([q[0], q[1], q[2]], cr[i])
 
     def _get_angles_lists(self):
         for v in self.qubits_list:
@@ -606,4 +603,3 @@ class LG(TestJob):
                     self.va.append(i)
             random.shuffle(self.va)
             self.indices_list.append(self.va)
-   

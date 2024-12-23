@@ -5,9 +5,10 @@
 __author__ = "Tomasz Rybotycki"
 
 import os
-from zipfile import ZipFile
-from typing import List, Dict, Iterable
 from itertools import combinations
+from typing import Dict, Iterable, List
+from zipfile import ZipFile
+
 from qiskit_ibm_runtime.ibm_backend import IBMBackend
 from tqdm import tqdm
 
@@ -28,17 +29,17 @@ def find_lgi_triplets(backend: IBMBackend) -> List[Dict[str, int]]:
     """
     Given the IBM backend, find the qubit triplets for the Laggett-Garg test experiment.
     We require that qubits X, A, B are connected in the following way:
-    
+
     X -> A
-     
+
     and
-     
+
     X -> B,
 
     where the arrow denotes the direction of the entangling gate.
 
     :params:
-        backend:     IBM backend. 
+        backend:     IBM backend.
 
     :return:
         A list of LGI-eligible qubit triplets.

@@ -3,32 +3,31 @@
 """
 
 import time
+from datetime import datetime, timedelta
 
 import pandas as pd
-from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
-
-from qiskit_aer import AerSimulator
-
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_aer import AerSimulator
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime import SamplerV2 as Sampler
+from tqdm import tqdm
 
 from job import Job, VivianiJob
 from utils import *
 
-from datetime import timedelta, datetime
-from tqdm import tqdm
 
 def enqueue_jobs():
 
     service = QiskitRuntimeService(
-            channel="ibm_quantum",
-            token=TOKENS[TOKEN_VARIABLES[0]],
-        )
-    #service = QiskitRuntimeService()
+        channel="ibm_quantum",
+        token=TOKENS[TOKEN_VARIABLES[0]],
+    )
+    # service = QiskitRuntimeService()
 
     backend_str: str = "ibm_brisbane"
     backend = service.get_backend(backend_str)
     backend = AerSimulator().from_backend(backend)
-    #backend = service.get_backend("ibmq_qasm_simulator")
+    # backend = service.get_backend("ibmq_qasm_simulator")
 
     jobs = []
     job_list_table = pd.DataFrame()
@@ -73,7 +72,7 @@ def enqueue_jobs():
             i = int(file.read())
     else:
         print("No file tracker found.")
-        
+
     print(f"\t{i}")
     return
 
@@ -86,12 +85,12 @@ def enqueue_jobs():
             token=TOKENS[TOKEN_VARIABLES[i % len(TOKEN_VARIABLES)]],
         )
         print(service.active_account())
-        
 
         try:
             sampler = Sampler(backend=backend)
-            jobs[i].queued_job = sampler.run(jobs[i].circuits, shots=N_SHOTS,
-            skip_transpilation=True)
+            jobs[i].queued_job = sampler.run(
+                jobs[i].circuits, shots=N_SHOTS, skip_transpilation=True
+            )
 
             # print(jobs[i].queued_job)
             # jobs[i].queued_job = backend.run(jobs[i].circuits, shots=N_SHOTS)
@@ -99,7 +98,7 @@ def enqueue_jobs():
             job_data = {
                 "job_id": jobs[i].queued_job.job_id(),
                 "pars": jobs[i].indices_list,
-                "token_id": TOKEN_VARIABLES[i % len(TOKEN_VARIABLES)].split("_")[-1]
+                "token_id": TOKEN_VARIABLES[i % len(TOKEN_VARIABLES)].split("_")[-1],
             }
             job_list_table = pd.concat(
                 [job_list_table, pd.DataFrame([job_data])], ignore_index=True
@@ -115,9 +114,7 @@ def enqueue_jobs():
             time.sleep(WAIT_TIME)
             if jobs[i].update_status():
                 if jobs[i].last_status == "DONE" and not jobs[i].if_saved:
-                    filename = (
-                        f"{RESULTS_FOLDER_NAME}/results_tests_{str(i)}.csv"
-                    )
+                    filename = f"{RESULTS_FOLDER_NAME}/results_tests_{str(i)}.csv"
                     jobs[i].save_to_file(filename, ZIP_FILE_NAME)
                     i += 1
                     ndone = False
@@ -126,6 +123,7 @@ def enqueue_jobs():
                     ndone = False
 
     experiments_clean_up(job_list_path)
+
 
 def main():
     print("Start")
