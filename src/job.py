@@ -479,6 +479,8 @@ class Weak(TestJob):
                 alpha = (2 * a - 1) * epp
                 beta = (2 * b - 1) * epp
 
+                # TODO TR: Refactor that if.
+
                 if c:
                     self.we(self.circuits[-1], q[0], q[1], alpha)
                     self.circuits[-1].rz(np.pi / 2, q[0])
@@ -559,6 +561,7 @@ class LG(TestJob):
                 self.circuits[-1].sx(q[0])
                 self.circuits[-1].rz(-np.pi / 2, q[0])
 
+                # TODO TR: Refactor that if.
                 if c:
                     self.circuits[-1].rz(np.pi / 2 + aa, q[0])
                     self.circuits[-1].sx(q[0])
