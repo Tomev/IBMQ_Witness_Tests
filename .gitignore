@@ -3,3 +3,4 @@ quick_tests.py
 *__pycache__/
 log.txt
 *.zip
+settings.json
