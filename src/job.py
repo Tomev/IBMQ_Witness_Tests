@@ -614,12 +614,9 @@ class LG(TestJob):
                     self.circuits[-1].rz(np.pi / 2 - aa, q[0])
 
 
-                self.circuits[-1].rz(np.pi / 2, q[0])
+                # Prepare initial qubit measurement in Y basis.
                 self.circuits[-1].sx(q[0])
-                self.circuits[-1].rz(-np.pi / 2, q[0])
-
                 
-
                 self.circuits[-1].measure([q[0], q[1], q[2]], cr[i])
 
     def _get_angles_lists(self):
