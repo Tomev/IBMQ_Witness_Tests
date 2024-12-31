@@ -527,11 +527,15 @@ class LG(TestJob):
 
     @staticmethod
     def we(c: QuantumCircuit, i, j, eps):
+        
         c.ecr(i, j)
         c.rz(eps, j)
         c.ecr(i, j)
+
+        # Y_-
         c.rz(np.pi / 2, j)
         c.sx(j)
+        # We can skip the RZ rotation before the measurememt
 
     def add_test_circuits(self, qubits_list: List[int], epp) -> None:
         self.qubits_list = qubits_list
@@ -539,6 +543,7 @@ class LG(TestJob):
         self.ep = epp
 
         self.circuits.clear()
+
         for s in range(8 * self.n_repetitions):
             # self.circuits.append(QuantumCircuit(127, len(listvert)))
             cr = []
@@ -549,14 +554,28 @@ class LG(TestJob):
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
                 q = qubits_list[i]
+
+                # print(self.indices_list)
+
                 par = self.indices_list[i][s]
-                a = par % 2
-                b = (par // 2) % 2
-                c = par // 4
-                alpha = (2 * a - 1) * epp
-                beta = (2 * b - 1) * epp
+
+                # print(par)
+
+                # Zdaje się, że a, b, c to flagi sterujące eksperymentem.
+                a = par % 2             # Liczenie kąta pomiaru na qubicie a
+                b = (par // 2) % 2      # Liczenie kąta pomiaru na qubicie b
+                c = par // 4            # Kolejność pomiarów słabych
+
+                # print(f"a={a}, b={b}, c={c}")
+
+                # Wartości kątów w zależności od flagi. (-epp lub epp)
+                alpha = (2 * a - 1) * epp   # Kąt pomiaru na qubicie a
+                beta = (2 * b - 1) * epp    # Kąt pomiaru na qubicie b
+
                 aa = np.pi / 4
                 bb = -np.pi / 4
+
+                # Y_- |0> = 1/sqrt(2) (|0> - |1>) state
                 self.circuits[-1].rz(np.pi / 2, q[0])
                 self.circuits[-1].sx(q[0])
                 self.circuits[-1].rz(-np.pi / 2, q[0])
@@ -570,6 +589,7 @@ class LG(TestJob):
                     self.circuits[-1].rz(-np.pi / 2 + aa, q[0])
                     self.circuits[-1].sx(q[0])
                     self.circuits[-1].rz(np.pi / 2 - aa, q[0])
+
                     self.circuits[-1].rz(np.pi / 2 + bb, q[0])
                     self.circuits[-1].sx(q[0])
                     self.circuits[-1].rz(-np.pi / 2 - bb, q[0])
@@ -593,9 +613,13 @@ class LG(TestJob):
                     self.circuits[-1].sx(q[0])
                     self.circuits[-1].rz(np.pi / 2 - aa, q[0])
 
+
                 self.circuits[-1].rz(np.pi / 2, q[0])
                 self.circuits[-1].sx(q[0])
                 self.circuits[-1].rz(-np.pi / 2, q[0])
+
+                
+
                 self.circuits[-1].measure([q[0], q[1], q[2]], cr[i])
 
     def _get_angles_lists(self):
