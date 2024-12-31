@@ -26,7 +26,7 @@ def prepare_jobs(backend_name: str) -> List[Job]:
 
     # Prepare circuits. This is the part to modify.
     
-
+    print("\tGet target device for LG qubit trilplets extraction...")
     service: QiskitRuntimeService = QiskitRuntimeService(
             channel="ibm_quantum",
             token=TOKENS[TOKEN_VARIABLES[1]],
@@ -34,12 +34,14 @@ def prepare_jobs(backend_name: str) -> List[Job]:
 
     backend: IBMBackend = service.get_backend(backend_name)
 
+    print("\tExtracting LG qubit triplets...")
     qubits: List[List[int]] = [[v['x'], v['a'], v['b']] for v in find_lgi_triplets(backend)]
 
-    print(qubits)
+    # print(qubits)
 
     epp: float = 0.1
 
+    print("\tPreparing LG jobs...")
     for q_list in qubits:
         job: LG = LG()
         job.add_test_circuits([q_list], epp)
@@ -65,17 +67,17 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
     print("\tRunning the circuits...\n")
     sampler = Sampler(backend=simulator)
 
-    for j, job in enumerate(jobs):
+    for j, job in tqdm(enumerate(jobs)):
 
-        print(f"\t{backend_name} job {j}.")
+        print(f"\n\t{backend_name} job {j}.")
         results = []
 
         for i, circuit in enumerate(job.circuits):
 
             # print(circuit)
 
-            # result = sampler.run([circuit], shots=100).result()
-            result = sampler.run([circuit], shots=15000000).result()
+            result = sampler.run([circuit], shots=100).result()
+            # result = sampler.run([circuit], shots=15000000).result()
             data_pub = result[0].data
 
             # cr0 is the name of classical register we use
