@@ -437,6 +437,38 @@ class TestJob(Job):
         Adds test circuits to the job.
         """
         raise NotImplementedError
+    
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        
+        job_result = self.queued_job.result()
+        for pub_result in job_result:
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+
+        indices_i=[]
+        indices_q=[]
+
+        for s in range(8*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
 
 
 class Weak(TestJob):
@@ -613,10 +645,8 @@ class LG(TestJob):
                     self.circuits[-1].sx(q[0])
                     self.circuits[-1].rz(np.pi / 2 - aa, q[0])
 
-
                 # Prepare initial qubit measurement in Y basis.
-                self.circuits[-1].sx(q[0])
-                
+                self.circuits[-1].sx(q[0])           
                 self.circuits[-1].measure([q[0], q[1], q[2]], cr[i])
 
     def _get_angles_lists(self):
@@ -627,3 +657,33 @@ class LG(TestJob):
                     self.va.append(i)
             random.shuffle(self.va)
             self.indices_list.append(self.va)
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for pub_result in job_result:
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(8*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)

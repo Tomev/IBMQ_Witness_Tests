@@ -2,10 +2,6 @@
     This module is the basis for the jobs simulation.
 """
 
-import time
-from datetime import datetime, timedelta
-
-import pandas as pd
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import QiskitRuntimeService
@@ -17,8 +13,6 @@ from src.job import LG, Job
 from src.utils import *
 
 from typing import List
-
-import pickle
 
 
 def prepare_jobs(backend_name: str) -> List[Job]:
@@ -67,26 +61,21 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
     print("\tRunning the circuits...\n")
     sampler = Sampler(backend=simulator)
 
+    n_shots = 15000000
+    # n_shots = 100
+
+    zip_file_name = "LG_sim"
+
+    # TR TODO: This probably could be parallelized. Figure out how to do it.
     for j, job in tqdm(enumerate(jobs)):
 
         print(f"\n\t{backend_name} job {j}.")
-        results = []
 
-        for i, circuit in enumerate(job.circuits):
-
-            # print(circuit)
-
-            result = sampler.run([circuit], shots=100).result()
-            # result = sampler.run([circuit], shots=15000000).result()
-            data_pub = result[0].data
-
-            # cr0 is the name of classical register we use
-            counts = data_pub.cr0.get_counts()
-            print(f"\t\tCircuit {i} counts: {counts}")
-            results.append(counts)
-
-        with open(f"{backend_name}_job_{j}.pkl", "wb") as f:
-            pickle.dump(results, f) 
+        print(f"\n\t\tRunning the job...")
+        job.queued_job = sampler.run(job.circuits, shots=n_shots)
+        results_csv = f"{backend_name}_{str(job.qubits_list[0])}.csv"
+        print(f"\n\t\tRunning saving job...")
+        job.save_to_file(results_csv, zip_file_name)
 
  
 def main() -> None:
