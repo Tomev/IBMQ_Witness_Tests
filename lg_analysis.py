@@ -12,7 +12,7 @@ n_qubit_sets = 13
 n_jobs = 60
 results_path = "lg/results"
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
-
+qubits_list=[[1,0,2],[10,9,11],[21,20,22],[29,28,30],[41,40,53],[49,48,50],[59,58,60],[69,68,70],[78,77,79],[86,85,87],[95,94,96],[107,106,108],[117,116,118]]
 
 def load_json(json_file_path):
     with open(json_file_path, "r") as json_file:
@@ -107,7 +107,9 @@ def main():
 
     weak_meas_rotation_angle = 0.1  # That's our weak measurement rotation angle.
 
-    inequality_values_per_set = []
+    inequality_values_ab = []
+    inequality_values_ba = []
+    inequality_values_mean = [] 
 
     for qubit_set_idx in range(n_qubit_sets):
 
@@ -296,11 +298,35 @@ def main():
             Bx
         )
 
-        inequality_values_per_set.append(
-            Bx + xA - BA
+        inequality_values_ba.append(
+           (qubits_list[qubit_set_idx], Bx + xA - BA)
+        )
+        inequality_values_ab.append(
+            (qubits_list[qubit_set_idx], Ax + xB - AB)
+        )
+        inequality_values_mean.append(
+            (qubits_list[qubit_set_idx], (Ax + xB - AB + Bx + xA - BA)/2)
         )
 
-    print(inequality_values_per_set)
+    inequality_values_ab.sort(reverse=True, key=lambda x: x[1])
+    inequality_values_ba.sort(reverse=True, key=lambda x: x[1])
+    inequality_values_mean.sort(reverse=True, key=lambda x: x[1])
+
+    indices = range(len(inequality_values_ab))
+    df = pd.DataFrame(
+            columns=["ba", "ba_val", "ab", "ab_val", "mean", "mean_val"],
+            index=indices
+    )
+
+    for i in indices:
+        df.loc[i, "ba"] = inequality_values_ba[i][0]
+        df.loc[i, "ba_val"] = inequality_values_ba[i][1]
+        df.loc[i, "ab"] = inequality_values_ab[i][0]
+        df.loc[i, "ab_val"] = inequality_values_ab[i][1]
+        df.loc[i, "mean"] = inequality_values_mean[i][0]
+        df.loc[i, "mean_val"] = inequality_values_mean[i][1]
+
+    df.to_csv(f"{results_path}/results_sherbrooke_real.csv")
 
 if __name__ == "__main__":
     main()
