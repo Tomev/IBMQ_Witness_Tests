@@ -71,10 +71,10 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
 
         print(f"\n\t{backend_name} job {j}.")
 
-        print(f"\n\t\tRunning the job...")
+        print(f"\t\tRunning the job...")
         job.queued_job = sampler.run(job.circuits, shots=n_shots)
         results_csv = f"{backend_name}_{str(job.qubits_list[0])}.csv"
-        print(f"\n\t\tRunning saving job...")
+        print(f"\t\tRunning saving job...")
         job.save_to_file(results_csv, zip_file_name)
 
  
