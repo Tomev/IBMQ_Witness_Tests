@@ -236,15 +236,15 @@ def main():
         
         # For steering_qubit in [0, 3], the weak measurements order is A B, hence 
         # we only use 0-3 indices in the equations below. 
-        print("ABC")
-        ABC = (ss[0] + ss[3] - ss[2] - ss[1])/ (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4)
-        print(
-            ABC
-        )
         print("BAC")
-        BAC = (ss[4] + ss[7] - ss[6] - ss[5])/ (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4)
+        BAC = (ss[0] + ss[3] - ss[2] - ss[1])/ (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4)
         print(
             BAC
+        )
+        print("ABC")
+        ABC = (ss[4] + ss[7] - ss[6] - ss[5])/ (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4)
+        print(
+            ABC
         )
         print("AB")
         AB = (ab[0] + ab[3] - ab[2] - ab[1]) / (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4) 
