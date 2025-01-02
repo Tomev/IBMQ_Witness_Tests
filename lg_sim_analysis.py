@@ -3,9 +3,8 @@ import json
 from os import listdir
 
 # Settings
-n_qubit_sets = 13
-n_jobs = 60
-results_path = "LG_Sim/results"
+# results_path = "LG_Sim/results"
+results_path = "LG_noiseless_sim/results"
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
 
 
@@ -64,19 +63,22 @@ def main():
     analysis_results_ab = {
                 "brisbane": [],
                 "kyiv": [],
-                "sherbrooke": []
+                "sherbrooke": [],
+                "": []
             }
     
     analysis_results_ba = {
                 "brisbane": [],
                 "kyiv": [],
-                "sherbrooke": []
+                "sherbrooke": [],
+                "": []
             }
     
     analysis_results_mean = {
                 "brisbane": [],
                 "kyiv": [],
-                "sherbrooke": []
+                "sherbrooke": [],
+                "": []
             }
     
     files = listdir(results_path)      
@@ -86,8 +88,14 @@ def main():
 
     for f in files:
 
-        qubit_set = f.split("_")[2].split(".")[0]
-        backend = f.split("_")[1]
+        f_split = f.split("_")
+
+        if len(f_split) > 2:
+            qubit_set = f.split("_")[2].split(".")[0]
+            backend = f.split("_")[1]
+        else:
+            qubit_set = f.split("_")[1].split(".")[0]
+            backend = ""
 
         pd_result = pd.read_csv(
             f"{results_path}/{f}", index_col=0
@@ -263,7 +271,7 @@ def main():
         analysis_results_ab[backend].append((qubit_set, Ax + xB - AB))
         analysis_results_mean[backend].append((qubit_set, (Ax + xB - AB + Bx + xA - BA)/2))
 
-    backends=["brisbane", "kyiv", "sherbrooke"]
+    backends=["brisbane", "kyiv", "sherbrooke", ""]
 
     # Prepare results for saving
     for backend in backends:
