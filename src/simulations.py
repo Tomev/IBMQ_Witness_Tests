@@ -59,14 +59,16 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
 
         backend: IBMBackend = service.get_backend(backend_name)
         simulator = simulator.from_backend(backend)
+    else:
+        backend_name = "noiseless_simulator"
 
     print("\tRunning the circuits...\n")
     sampler = Sampler(backend=simulator)
 
     n_shots = 15000000
     # n_shots = 100
-
-    zip_file_name = "LG_noiseless_sim"
+    
+    zip_file_name = "LG_sim"
 
     # TR TODO: This probably could be parallelized. Figure out how to do it.
     for j, job in tqdm(enumerate(jobs)):
@@ -81,8 +83,8 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
 
  
 def main() -> None:
-    # backends = ["ibm_sherbrooke", "ibm_kyiv", "ibm_brisbane"]
-    backends = [""]
+    backends = ["ibm_brisbane", "ibm_sherbrooke", "ibm_kyiv", ""]
+    # backends = [""]
 
     for backend in backends:
         jobs: List[Job] = prepare_jobs(backend)
