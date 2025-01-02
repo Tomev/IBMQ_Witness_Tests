@@ -3,8 +3,8 @@ import json
 from os import listdir
 
 # Settings
-# results_path = "LG_Sim/results"
-results_path = "LG_noiseless_sim/results"
+results_path = "LG_Sim/results"
+# results_path = "LG_noiseless_sim/results"
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
 
 
@@ -60,21 +60,35 @@ class BellResult:
 
 
 def main():
-    analysis_results_ab = {
+    lg_analysis_results_ab = {
                 "brisbane": [],
                 "kyiv": [],
                 "sherbrooke": [],
                 "": []
             }
     
-    analysis_results_ba = {
+    lg_analysis_results_ba = {
                 "brisbane": [],
                 "kyiv": [],
                 "sherbrooke": [],
                 "": []
             }
     
-    analysis_results_mean = {
+    lg_analysis_results_mean = {
+                "brisbane": [],
+                "kyiv": [],
+                "sherbrooke": [],
+                "": []
+            }
+    
+    order_analysis_results_abc_bac = {
+                "brisbane": [],
+                "kyiv": [],
+                "sherbrooke": [],
+                "": []
+            }
+        
+    order_analysis_results_abc_bac_module = {
                 "brisbane": [],
                 "kyiv": [],
                 "sherbrooke": [],
@@ -84,7 +98,6 @@ def main():
     files = listdir(results_path)      
 
     weak_meas_rotation_angle = 0.1  # That's our weak measurement rotation angle.
-
 
     for f in files:
 
@@ -267,37 +280,57 @@ def main():
         Bx = (bb[4] - bb[7] - bb[6] + bb[5]) / (n_shots * weak_meas_rotation_angle * 4) 
         #print(Bx)
 
-        analysis_results_ba[backend].append((qubit_set, Bx + xA - BA))
-        analysis_results_ab[backend].append((qubit_set, Ax + xB - AB))
-        analysis_results_mean[backend].append((qubit_set, (Ax + xB - AB + Bx + xA - BA)/2))
+        lg_analysis_results_ba[backend].append((qubit_set, Bx + xA - BA))
+        lg_analysis_results_ab[backend].append((qubit_set, Ax + xB - AB))
+        lg_analysis_results_mean[backend].append((qubit_set, (Ax + xB - AB + Bx + xA - BA)/2))
+
+        order_analysis_results_abc_bac[backend].append((qubit_set, ABC - BAC))
+        order_analysis_results_abc_bac_module[backend].append((qubit_set, abs(ABC - BAC)))
 
     backends=["brisbane", "kyiv", "sherbrooke", ""]
 
     # Prepare results for saving
     for backend in backends:
-        analysis_results_ba[backend].sort(key=lambda x: x[1], reverse=True)
-        analysis_results_ab[backend].sort(key=lambda x: x[1], reverse=True)
-        analysis_results_mean[backend].sort(key=lambda x: x[1], reverse=True)
+        lg_analysis_results_ba[backend].sort(key=lambda x: x[1], reverse=True)
+        lg_analysis_results_ab[backend].sort(key=lambda x: x[1], reverse=True)
+        lg_analysis_results_mean[backend].sort(key=lambda x: x[1], reverse=True)
+        order_analysis_results_abc_bac[backend].sort(key=lambda x: x[1], reverse=True)
+        order_analysis_results_abc_bac_module[backend].sort(key=lambda x: x[1], reverse=True)
 
-    # Create frames and save results
+    # Create frames and save results for LG tests
     for backend in backends:        
-        indices = list(range(len(analysis_results_ba[backend])))
+        indices = list(range(len(lg_analysis_results_ba[backend])))
         df = pd.DataFrame(
             columns=["ba", "ba_val", "ab", "ab_val", "mean", "mean_val"],
             index=indices
         )
 
         for i in indices:
-            df.loc[i, "ba"] = analysis_results_ba[backend][i][0]
-            df.loc[i, "ba_val"] = analysis_results_ba[backend][i][1]
-            df.loc[i, "ab"] = analysis_results_ab[backend][i][0]
-            df.loc[i, "ab_val"] = analysis_results_ab[backend][i][1]
-            df.loc[i, "mean"] = analysis_results_mean[backend][i][0]
-            df.loc[i, "mean_val"] = analysis_results_mean[backend][i][1]
+            df.loc[i, "ba"] = lg_analysis_results_ba[backend][i][0]
+            df.loc[i, "ba_val"] = lg_analysis_results_ba[backend][i][1]
+            df.loc[i, "ab"] = lg_analysis_results_ab[backend][i][0]
+            df.loc[i, "ab_val"] = lg_analysis_results_ab[backend][i][1]
+            df.loc[i, "mean"] = lg_analysis_results_mean[backend][i][0]
+            df.loc[i, "mean_val"] = lg_analysis_results_mean[backend][i][1]
 
-        df.to_csv(f"{results_path}/results_{backend}.csv")
+        df.to_csv(f"{results_path}/lg_results_{backend}.csv")
 
-                        
+    for backend in backends:
+        indices = list(range(len(order_analysis_results_abc_bac[backend])))
+        df = pd.DataFrame(
+            columns=["abc", "ABC-BAC", "abc_bac", "|ABC-BAC|"],
+            index=indices
+        )
+
+        for i in indices:
+            df.loc[i, "abc"] = order_analysis_results_abc_bac[backend][i][0]
+            df.loc[i, "ABC-BAC"] = order_analysis_results_abc_bac[backend][i][1]
+            df.loc[i, "abc_bac"] = order_analysis_results_abc_bac_module[backend][i][0]
+            df.loc[i, "|ABC-BAC|"] = order_analysis_results_abc_bac_module[backend][i][1]
+
+        df.to_csv(f"{results_path}/order_results_{backend}.csv")
+
+
 
     # print(analysis_results_ba)
     # print(analysis_results_ab)
