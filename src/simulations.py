@@ -19,17 +19,19 @@ def prepare_jobs(backend_name: str) -> List[Job]:
     jobs: List[Job] = []
 
     # Prepare circuits. This is the part to modify.
-    
-    print("\tGet target device for LG qubit trilplets extraction...")
-    service: QiskitRuntimeService = QiskitRuntimeService(
-            channel="ibm_quantum",
-            token=TOKENS[TOKEN_VARIABLES[1]],
-        )
+    if backend_name != "":
+        print("\tGet target device for LG qubit trilplets extraction...")
+        service: QiskitRuntimeService = QiskitRuntimeService(
+                channel="ibm_quantum",
+                token=TOKENS[TOKEN_VARIABLES[1]],
+            )
 
-    backend: IBMBackend = service.get_backend(backend_name)
+        backend: IBMBackend = service.get_backend(backend_name)
 
-    print("\tExtracting LG qubit triplets...")
-    qubits: List[List[int]] = [[v['x'], v['a'], v['b']] for v in find_lgi_triplets(backend)]
+        print("\tExtracting LG qubit triplets...")
+        qubits: List[List[int]] = [[v['x'], v['a'], v['b']] for v in find_lgi_triplets(backend)]
+    else:
+        qubits: List[List[int]] = [[0, 1, 2]]
 
     # print(qubits)
 
@@ -64,7 +66,7 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
     n_shots = 15000000
     # n_shots = 100
 
-    zip_file_name = "LG_sim"
+    zip_file_name = "LG_noiseless_sim"
 
     # TR TODO: This probably could be parallelized. Figure out how to do it.
     for j, job in tqdm(enumerate(jobs)):
@@ -79,7 +81,8 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
 
  
 def main() -> None:
-    backends = ["ibm_sherbrooke", "ibm_kyiv", "ibm_brisbane"]
+    # backends = ["ibm_sherbrooke", "ibm_kyiv", "ibm_brisbane"]
+    backends = [""]
 
     for backend in backends:
         jobs: List[Job] = prepare_jobs(backend)
