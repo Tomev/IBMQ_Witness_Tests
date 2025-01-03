@@ -608,9 +608,9 @@ class LG(TestJob):
                 bb = -np.pi / 4
 
                 # Y_+ |0> = 1/sqrt(2) (|0> + |1>) state
-                self.circuits[-1].rz(np.pi / 2, q[0])
-                self.circuits[-1].sx(q[0])
                 self.circuits[-1].rz(-np.pi / 2, q[0])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].rz(np.pi / 2, q[0])
 
                 # TODO TR: Refactor that if.
                 if c:
