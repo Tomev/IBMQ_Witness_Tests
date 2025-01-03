@@ -64,35 +64,35 @@ def main():
                 "brisbane": [],
                 "kyiv": [],
                 "sherbrooke": [],
-                "": []
+                "simulator": []
             }
     
     lg_analysis_results_ba = {
                 "brisbane": [],
                 "kyiv": [],
                 "sherbrooke": [],
-                "": []
+                "simulator": []
             }
     
     lg_analysis_results_mean = {
                 "brisbane": [],
                 "kyiv": [],
                 "sherbrooke": [],
-                "": []
+                "simulator": []
             }
     
     order_analysis_results_abc_bac = {
                 "brisbane": [],
                 "kyiv": [],
                 "sherbrooke": [],
-                "": []
+                "simulator": []
             }
         
     order_analysis_results_abc_bac_module = {
                 "brisbane": [],
                 "kyiv": [],
                 "sherbrooke": [],
-                "": []
+                "simulator": []
             }
     
     files = listdir(results_path)      
@@ -256,28 +256,28 @@ def main():
         BA = (ab[4] + ab[7] - ab[6] - ab[5]) / (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4) 
         #print(BA)
         #print("AxC")
-        AxC = (ac[0] - ac[3] + ac[2] - ac[1]) / (n_shots * weak_meas_rotation_angle * 4)
+        AxC = (- ac[0] + ac[3] - ac[2] + ac[1]) / (n_shots * weak_meas_rotation_angle * 4)
         #print(AxC)
         #print("xAC")
-        xAC = (ac[4] - ac[7] + ac[6] - ac[5]) / (n_shots * weak_meas_rotation_angle * 4)
+        xAC = (- ac[4] + ac[7] - ac[6] + ac[5]) / (n_shots * weak_meas_rotation_angle * 4)
         #print(xAC)
         #print("xBC")
-        xBC = (bc[0] - bc[3] - bc[2] + bc[1]) / (n_shots * weak_meas_rotation_angle * 4)
+        xBC = (- bc[0] + bc[3] + bc[2] - bc[1]) / (n_shots * weak_meas_rotation_angle * 4)
         #print(xBC)
         #print("BxC")
-        BxC = (bc[4] - bc[7] - bc[6] + bc[5]) / (n_shots * weak_meas_rotation_angle * 4)
+        BxC = (- bc[4] + bc[7] + bc[6] - bc[5]) / (n_shots * weak_meas_rotation_angle * 4)
         #print(BxC)
         #print("Ax")
-        Ax = (aa[0] - aa[3] + aa[2] - aa[1]) / (n_shots * weak_meas_rotation_angle * 4)
+        Ax = (- aa[0] + aa[3] - aa[2] + aa[1]) / (n_shots * weak_meas_rotation_angle * 4)
         #print(Ax)
         #print("xA")
-        xA = (aa[4] - aa[7] + aa[6] - aa[5]) / (n_shots * weak_meas_rotation_angle * 4) 
+        xA = (- aa[4] + aa[7] - aa[6] + aa[5]) / (n_shots * weak_meas_rotation_angle * 4) 
         #print(xA)
         #print("xB")
-        xB = (bb[0] - bb[3] - bb[2] + bb[1]) / (n_shots * weak_meas_rotation_angle * 4) 
+        xB = (- bb[0] + bb[3] + bb[2] - bb[1]) / (n_shots * weak_meas_rotation_angle * 4) 
         #print(xB)
         #print("Bx")
-        Bx = (bb[4] - bb[7] - bb[6] + bb[5]) / (n_shots * weak_meas_rotation_angle * 4) 
+        Bx = (- bb[4] + bb[7] + bb[6] - bb[5]) / (n_shots * weak_meas_rotation_angle * 4) 
         #print(Bx)
 
         lg_analysis_results_ba[backend].append((qubit_set, Bx + xA - BA))
@@ -287,7 +287,7 @@ def main():
         order_analysis_results_abc_bac[backend].append((qubit_set, ABC - BAC))
         order_analysis_results_abc_bac_module[backend].append((qubit_set, abs(ABC - BAC)))
 
-    backends=["brisbane", "kyiv", "sherbrooke", ""]
+    backends=["brisbane", "kyiv", "sherbrooke", "simulator"]
 
     # Prepare results for saving
     for backend in backends:
