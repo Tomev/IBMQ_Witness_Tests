@@ -19,7 +19,7 @@ def prepare_jobs(backend_name: str) -> List[Job]:
     jobs: List[Job] = []
 
     # Prepare circuits. This is the part to modify.
-    if backend_name != "":
+    if backend_name != "noiseless_simulator":
         print("\tGet target device for LG qubit trilplets extraction...")
         service: QiskitRuntimeService = QiskitRuntimeService(
                 channel="ibm_quantum",
@@ -46,12 +46,12 @@ def prepare_jobs(backend_name: str) -> List[Job]:
     return jobs
 
 
-def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
+def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") -> None:
     print(f"\tPreparing {backend_name} simulator...")
 
     simulator: AerSimulator = AerSimulator()
 
-    if backend_name != "":
+    if backend_name != "noiseless_simulator":
         service: QiskitRuntimeService = QiskitRuntimeService(
             channel="ibm_quantum",
             token=TOKENS[TOKEN_VARIABLES[1]],
@@ -59,8 +59,6 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
 
         backend: IBMBackend = service.get_backend(backend_name)
         simulator = simulator.from_backend(backend)
-    else:
-        backend_name = "noiseless_simulator"
 
     print("\tRunning the circuits...\n")
     sampler = Sampler(backend=simulator)
@@ -83,8 +81,7 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "") -> None:
 
  
 def main() -> None:
-    backends = ["ibm_brisbane", "ibm_sherbrooke", "ibm_kyiv", ""]
-    # backends = [""]
+    backends = ["ibm_brisbane", "ibm_sherbrooke", "ibm_kyiv", "noiseless_simulator"]
 
     for backend in backends:
         jobs: List[Job] = prepare_jobs(backend)
