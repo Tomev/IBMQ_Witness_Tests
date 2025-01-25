@@ -9,7 +9,7 @@ from qiskit_ibm_runtime import SamplerV2 as Sampler
 from qiskit_ibm_runtime import IBMBackend
 from tqdm import tqdm
 
-from src.job import LG, Job
+from src.job import Job, VivianiJob
 from src.utils import *
 
 from typing import List
@@ -18,29 +18,15 @@ from typing import List
 def prepare_jobs(backend_name: str) -> List[Job]:
     jobs: List[Job] = []
 
-    # Prepare circuits. This is the part to modify.
-    if backend_name != "noiseless_simulator":
-        print("\tGet target device for LG qubit trilplets extraction...")
-        service: QiskitRuntimeService = QiskitRuntimeService(
-                channel="ibm_quantum",
-                token=TOKENS[TOKEN_VARIABLES[1]],
-            )
+    qubits = [i for i in range(127)]
 
-        backend: IBMBackend = service.get_backend(backend_name)
+    if backend_name == "noiseless_simulator":
+        qubits = [0]
 
-        print("\tExtracting LG qubit triplets...")
-        qubits: List[List[int]] = [[v['x'], v['a'], v['b']] for v in find_lgi_triplets(backend)]
-    else:
-        qubits: List[List[int]] = [[0, 1, 2]]
-
-    # print(qubits)
-
-    epp: float = 0.1
-
-    print("\tPreparing LG jobs...")
+    print("\tPreparing Viviani jobs...")
     for q_list in qubits:
-        job: LG = LG()
-        job.add_test_circuits([q_list], epp)
+        job: VivianiJob = VivianiJob()
+        job.add_witness_circuits([q_list])
         jobs.append(job)
 
     return jobs
@@ -63,10 +49,11 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
     print("\tRunning the circuits...\n")
     sampler = Sampler(backend=simulator)
 
-    n_shots = 15000000
+    n_shots = int(1e6)
     # n_shots = 100
     
-    zip_file_name = "LG_sim"
+    # zip_file_name = "LG_sim"
+    zip_file_name = "viviani_sim"
 
     # TR TODO: This probably could be parallelized. Figure out how to do it.
     for j, job in tqdm(enumerate(jobs)):
@@ -81,7 +68,8 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
 
  
 def main() -> None:
-    backends = ["ibm_brisbane", "ibm_sherbrooke", "ibm_kyiv", "noiseless_simulator"]
+    # backends = ["ibm_brisbane", "ibm_sherbrooke", "ibm_kyiv", "noiseless_simulator"]
+    backends = ["noiseless_simulator", "ibm_brisbane"]
 
     for backend in backends:
         jobs: List[Job] = prepare_jobs(backend)
