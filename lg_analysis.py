@@ -1,18 +1,28 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import ticker
-from scipy.optimize import curve_fit
-from scipy.optimize import least_squares
 import json
-from zipfile import ZipFile
+
+import pandas as pd
 
 # Settings
 n_qubit_sets = 13
 n_jobs = 60
 results_path = "lg/results"
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
-qubits_list=[[1,0,2],[10,9,11],[21,20,22],[29,28,30],[41,40,53],[49,48,50],[59,58,60],[69,68,70],[78,77,79],[86,85,87],[95,94,96],[107,106,108],[117,116,118]]
+qubits_list = [
+    [1, 0, 2],
+    [10, 9, 11],
+    [21, 20, 22],
+    [29, 28, 30],
+    [41, 40, 53],
+    [49, 48, 50],
+    [59, 58, 60],
+    [69, 68, 70],
+    [78, 77, 79],
+    [86, 85, 87],
+    [95, 94, 96],
+    [107, 106, 108],
+    [117, 116, 118],
+]
+
 
 def load_json(json_file_path):
     with open(json_file_path, "r") as json_file:
@@ -29,9 +39,6 @@ def load_json(json_file_path):
     }
 
     return metadata
-
-
-# from JobResult import *
 
 
 class BellResult:
@@ -109,7 +116,7 @@ def main():
 
     inequality_values_ab = []
     inequality_values_ba = []
-    inequality_values_mean = [] 
+    inequality_values_mean = []
 
     for qubit_set_idx in range(n_qubit_sets):
 
@@ -141,7 +148,7 @@ def main():
             #       If I remember correctly that's exactly it. Especially since ss is used
             #       to calculate ABC and BAC.
             s = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 - counts_per_steering_bit[steering_bit][states_order.index("100")]
                 - counts_per_steering_bit[steering_bit][states_order.index("010")]
                 + counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -154,7 +161,7 @@ def main():
             # TR:   What is sac? 000 + 100 + 011 + 111 - 010 - 110 - 001 - 101
             #       I add whenever there are the same values for qubits 0 and 1.
             sac = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 + counts_per_steering_bit[steering_bit][states_order.index("100")]
                 - counts_per_steering_bit[steering_bit][states_order.index("010")]
                 - counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -167,7 +174,7 @@ def main():
             # TR:   What is sbc? 000 + 010 + 101 + 111 - 100 - 110 - 001 - 011
             #       I add whenever there are the same values for qubits 0 and 2.
             sbc = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 - counts_per_steering_bit[steering_bit][states_order.index("100")]
                 + counts_per_steering_bit[steering_bit][states_order.index("010")]
                 - counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -180,7 +187,7 @@ def main():
             # TR:   What is sab? 000 + 001 + 110 + 111 - 100 - 101 - 011 - 010
             #       I add whenever there are the same values for qubits 1 and 2.
             sab = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 - counts_per_steering_bit[steering_bit][states_order.index("100")]
                 - counts_per_steering_bit[steering_bit][states_order.index("010")]
                 + counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -193,7 +200,7 @@ def main():
             # TR:   What is sa? 000 + 100 + 001 + 101 - 010 - 011 - 110 - 111
             #       Add every state with 0 on qubit 1.
             sa = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 + counts_per_steering_bit[steering_bit][states_order.index("100")]
                 - counts_per_steering_bit[steering_bit][states_order.index("010")]
                 - counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -206,7 +213,7 @@ def main():
             # TR:   What is sb? 000 + 001 + 010 + 011 - 100 - 101 - 110 - 111
             #       Add every state with 0 on qubit 2.
             sb = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 - counts_per_steering_bit[steering_bit][states_order.index("100")]
                 + counts_per_steering_bit[steering_bit][states_order.index("010")]
                 - counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -224,88 +231,67 @@ def main():
             bb.append(sb)
 
             # print(*b[j])
-            
+
             # print(counts_per_steering_bit[steering_bit])
             # print(counts_per_steering_bit[steering_bit][:4])
 
             # Prints sum of counts with 0 on the right bit (XX0).
             print(sum(counts_per_steering_bit[steering_bit][:4]) / n_shots)
-            
+
         # Indices in the equations below denote the value of steering_bits of the run.
-        # All the ss, ac, ab, bc, aa, bb have 8 elements. 
-        
-        # For steering_qubit in [0, 3], the weak measurements order is A B, hence 
-        # we only use 0-3 indices in the equations below. 
+        # All the ss, ac, ab, bc, aa, bb have 8 elements.
+
+        # For steering_qubit in [0, 3], the weak measurements order is A B, hence
+        # we only use 0-3 indices in the equations below.
         print("BAC")
-        BAC = (ss[0] + ss[3] - ss[2] - ss[1])/ (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4)
-        print(
-            BAC
+        BAC = (ss[0] + ss[3] - ss[2] - ss[1]) / (
+            n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4
         )
+        print(BAC)
         print("ABC")
-        ABC = (ss[4] + ss[7] - ss[6] - ss[5])/ (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4)
-        print(
-            ABC
+        ABC = (ss[4] + ss[7] - ss[6] - ss[5]) / (
+            n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4
         )
+        print(ABC)
         print("AB")
-        AB = (ab[0] + ab[3] - ab[2] - ab[1]) / (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4) 
-        print(
-            AB
+        AB = (ab[0] + ab[3] - ab[2] - ab[1]) / (
+            n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4
         )
+        print(AB)
         print("BA")
-        BA = (ab[4] + ab[7] - ab[6] - ab[5]) / (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4) 
-        print(
-            BA
+        BA = (ab[4] + ab[7] - ab[6] - ab[5]) / (
+            n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4
         )
+        print(BA)
         print("AxC")
         AxC = (ac[0] - ac[3] + ac[2] - ac[1]) / (n_shots * weak_meas_rotation_angle * 4)
-        print(
-            AxC
-            
-        )
+        print(AxC)
         print("xAC")
         xAC = (ac[4] - ac[7] + ac[6] - ac[5]) / (n_shots * weak_meas_rotation_angle * 4)
-        print(
-            xAC
-        )
+        print(xAC)
         print("xBC")
         xBC = (bc[0] - bc[3] - bc[2] + bc[1]) / (n_shots * weak_meas_rotation_angle * 4)
-        print(
-            xBC
-        )
+        print(xBC)
         print("BxC")
         BxC = (bc[4] - bc[7] - bc[6] + bc[5]) / (n_shots * weak_meas_rotation_angle * 4)
-        print(
-            BxC
-        )
+        print(BxC)
         print("Ax")
         Ax = (aa[0] - aa[3] + aa[2] - aa[1]) / (n_shots * weak_meas_rotation_angle * 4)
-        print(
-            Ax
-        )
+        print(Ax)
         print("xA")
-        xA = (aa[4] - aa[7] + aa[6] - aa[5]) / (n_shots * weak_meas_rotation_angle * 4) 
-        print(
-            xA
-        )
+        xA = (aa[4] - aa[7] + aa[6] - aa[5]) / (n_shots * weak_meas_rotation_angle * 4)
+        print(xA)
         print("xB")
-        xB = (bb[0] - bb[3] - bb[2] + bb[1]) / (n_shots * weak_meas_rotation_angle * 4) 
-        print(
-            xB
-        )
+        xB = (bb[0] - bb[3] - bb[2] + bb[1]) / (n_shots * weak_meas_rotation_angle * 4)
+        print(xB)
         print("Bx")
-        Bx = (bb[4] - bb[7] - bb[6] + bb[5]) / (n_shots * weak_meas_rotation_angle * 4) 
-        print(
-            Bx
-        )
+        Bx = (bb[4] - bb[7] - bb[6] + bb[5]) / (n_shots * weak_meas_rotation_angle * 4)
+        print(Bx)
 
-        inequality_values_ba.append(
-           (qubits_list[qubit_set_idx], Bx + xA - BA)
-        )
-        inequality_values_ab.append(
-            (qubits_list[qubit_set_idx], Ax + xB - AB)
-        )
+        inequality_values_ba.append((qubits_list[qubit_set_idx], Bx + xA - BA))
+        inequality_values_ab.append((qubits_list[qubit_set_idx], Ax + xB - AB))
         inequality_values_mean.append(
-            (qubits_list[qubit_set_idx], (Ax + xB - AB + Bx + xA - BA)/2)
+            (qubits_list[qubit_set_idx], (Ax + xB - AB + Bx + xA - BA) / 2)
         )
 
     inequality_values_ab.sort(reverse=True, key=lambda x: x[1])
@@ -314,8 +300,7 @@ def main():
 
     indices = range(len(inequality_values_ab))
     df = pd.DataFrame(
-            columns=["ba", "ba_val", "ab", "ab_val", "mean", "mean_val"],
-            index=indices
+        columns=["ba", "ba_val", "ab", "ab_val", "mean", "mean_val"], index=indices
     )
 
     for i in indices:
@@ -327,6 +312,7 @@ def main():
         df.loc[i, "mean_val"] = inequality_values_mean[i][1]
 
     df.to_csv(f"{results_path}/results_sherbrooke_real.csv")
+
 
 if __name__ == "__main__":
     main()

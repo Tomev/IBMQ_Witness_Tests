@@ -1,11 +1,35 @@
-import pandas as pd
 import json
 from os import listdir
+
+import pandas as pd
 
 # Settings
 results_path = "LG_Sim/results"
 # results_path = "LG_noiseless_sim/results"
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
+
+
+def to_list(string):
+    return list(map(int, string.strip("[]").split(", ")))
+
+
+def find_non_overlaping_triplets():
+    print("Start")
+    data = pd.read_csv("LG_sim/results/lg_results_brisbane.csv")
+    qubits_used = []
+    triplets = []
+
+    for i in range(len(data)):
+        triplet = to_list(data["mean"][i])
+        if bool(set(qubits_used) & set(triplet)):
+            continue
+        qubits_used.extend(triplet)
+        triplets.append(triplet)
+
+    assert len(qubits_used) == 3 * len(triplets)
+
+    print(triplets)
+    print(len(triplets))
 
 
 def load_json(json_file_path):
@@ -61,41 +85,41 @@ class BellResult:
 
 def main():
     lg_analysis_results_ab = {
-                "brisbane": [],
-                "kyiv": [],
-                "sherbrooke": [],
-                "simulator": []
-            }
-    
+        "brisbane": [],
+        "kyiv": [],
+        "sherbrooke": [],
+        "simulator": [],
+    }
+
     lg_analysis_results_ba = {
-                "brisbane": [],
-                "kyiv": [],
-                "sherbrooke": [],
-                "simulator": []
-            }
-    
+        "brisbane": [],
+        "kyiv": [],
+        "sherbrooke": [],
+        "simulator": [],
+    }
+
     lg_analysis_results_mean = {
-                "brisbane": [],
-                "kyiv": [],
-                "sherbrooke": [],
-                "simulator": []
-            }
-    
+        "brisbane": [],
+        "kyiv": [],
+        "sherbrooke": [],
+        "simulator": [],
+    }
+
     order_analysis_results_abc_bac = {
-                "brisbane": [],
-                "kyiv": [],
-                "sherbrooke": [],
-                "simulator": []
-            }
-        
+        "brisbane": [],
+        "kyiv": [],
+        "sherbrooke": [],
+        "simulator": [],
+    }
+
     order_analysis_results_abc_bac_module = {
-                "brisbane": [],
-                "kyiv": [],
-                "sherbrooke": [],
-                "simulator": []
-            }
-    
-    files = listdir(results_path)      
+        "brisbane": [],
+        "kyiv": [],
+        "sherbrooke": [],
+        "simulator": [],
+    }
+
+    files = listdir(results_path)
 
     weak_meas_rotation_angle = 0.1  # That's our weak measurement rotation angle.
 
@@ -110,9 +134,7 @@ def main():
             qubit_set = f.split("_")[1].split(".")[0]
             backend = ""
 
-        pd_result = pd.read_csv(
-            f"{results_path}/{f}", index_col=0
-        )
+        pd_result = pd.read_csv(f"{results_path}/{f}", index_col=0)
 
         sim_results = BellResult(pd.DataFrame())
         sim_results.AppendResults(pd_result)
@@ -148,7 +170,7 @@ def main():
             #       If I remember correctly that's exactly it. Especially since ss is used
             #       to calculate ABC and BAC.
             s = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 - counts_per_steering_bit[steering_bit][states_order.index("100")]
                 - counts_per_steering_bit[steering_bit][states_order.index("010")]
                 + counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -161,7 +183,7 @@ def main():
             # TR:   What is sac? 000 + 100 + 011 + 111 - 010 - 110 - 001 - 101
             #       I add whenever there are the same values for qubits 0 and 1.
             sac = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 + counts_per_steering_bit[steering_bit][states_order.index("100")]
                 - counts_per_steering_bit[steering_bit][states_order.index("010")]
                 - counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -174,7 +196,7 @@ def main():
             # TR:   What is sbc? 000 + 010 + 101 + 111 - 100 - 110 - 001 - 011
             #       I add whenever there are the same values for qubits 0 and 2.
             sbc = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 - counts_per_steering_bit[steering_bit][states_order.index("100")]
                 + counts_per_steering_bit[steering_bit][states_order.index("010")]
                 - counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -187,7 +209,7 @@ def main():
             # TR:   What is sab? 000 + 001 + 110 + 111 - 100 - 101 - 011 - 010
             #       I add whenever there are the same values for qubits 1 and 2.
             sab = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 - counts_per_steering_bit[steering_bit][states_order.index("100")]
                 - counts_per_steering_bit[steering_bit][states_order.index("010")]
                 + counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -200,7 +222,7 @@ def main():
             # TR:   What is sa? 000 + 100 + 001 + 101 - 010 - 011 - 110 - 111
             #       Add every state with 0 on qubit 1.
             sa = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 + counts_per_steering_bit[steering_bit][states_order.index("100")]
                 - counts_per_steering_bit[steering_bit][states_order.index("010")]
                 - counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -213,7 +235,7 @@ def main():
             # TR:   What is sb? 000 + 001 + 010 + 011 - 100 - 101 - 110 - 111
             #       Add every state with 0 on qubit 2.
             sb = (
-                + counts_per_steering_bit[steering_bit][states_order.index("000")]
+                +counts_per_steering_bit[steering_bit][states_order.index("000")]
                 - counts_per_steering_bit[steering_bit][states_order.index("100")]
                 + counts_per_steering_bit[steering_bit][states_order.index("010")]
                 - counts_per_steering_bit[steering_bit][states_order.index("110")]
@@ -231,63 +253,83 @@ def main():
             bb.append(sb)
 
             # print(*b[j])
-            
+
             # print(counts_per_steering_bit[steering_bit])
             # print(counts_per_steering_bit[steering_bit][:4])
 
             # Prints sum of counts with 0 on the right bit (XX0).
             # print(sum(counts_per_steering_bit[steering_bit][:4]) / n_shots)
-            
+
         # Indices in the equations below denote the value of steering_bits of the run.
-        # All the ss, ac, ab, bc, aa, bb have 8 elements. 
-        
-        # For steering_qubit in [0, 3], the weak measurements order is A B, hence 
-        # we only use 0-3 indices in the equations below. 
-        #print("BAC")
-        BAC = (ss[0] + ss[3] - ss[2] - ss[1])/ (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4)
-        #print(BAC)
-        #print("ABC")
-        ABC = (ss[4] + ss[7] - ss[6] - ss[5])/ (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4)
-        #print(ABC)
+        # All the ss, ac, ab, bc, aa, bb have 8 elements.
+
+        # For steering_qubit in [0, 3], the weak measurements order is A B, hence
+        # we only use 0-3 indices in the equations below.
+        # print("BAC")
+        BAC = (ss[0] + ss[3] - ss[2] - ss[1]) / (
+            n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4
+        )
+        # print(BAC)
+        # print("ABC")
+        ABC = (ss[4] + ss[7] - ss[6] - ss[5]) / (
+            n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4
+        )
+        # print(ABC)
         # print("AB")
-        AB = (ab[0] + ab[3] - ab[2] - ab[1]) / (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4) 
-        #print(AB)
-        #print("BA")
-        BA = (ab[4] + ab[7] - ab[6] - ab[5]) / (n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4) 
-        #print(BA)
-        #print("AxC")
-        AxC = (- ac[0] + ac[3] - ac[2] + ac[1]) / (n_shots * weak_meas_rotation_angle * 4)
-        #print(AxC)
-        #print("xAC")
-        xAC = (- ac[4] + ac[7] - ac[6] + ac[5]) / (n_shots * weak_meas_rotation_angle * 4)
-        #print(xAC)
-        #print("xBC")
-        xBC = (- bc[0] + bc[3] + bc[2] - bc[1]) / (n_shots * weak_meas_rotation_angle * 4)
-        #print(xBC)
-        #print("BxC")
-        BxC = (- bc[4] + bc[7] + bc[6] - bc[5]) / (n_shots * weak_meas_rotation_angle * 4)
-        #print(BxC)
-        #print("Ax")
-        Ax = (- aa[0] + aa[3] - aa[2] + aa[1]) / (n_shots * weak_meas_rotation_angle * 4)
-        #print(Ax)
-        #print("xA")
-        xA = (- aa[4] + aa[7] - aa[6] + aa[5]) / (n_shots * weak_meas_rotation_angle * 4) 
-        #print(xA)
-        #print("xB")
-        xB = (- bb[0] + bb[3] + bb[2] - bb[1]) / (n_shots * weak_meas_rotation_angle * 4) 
-        #print(xB)
-        #print("Bx")
-        Bx = (- bb[4] + bb[7] + bb[6] - bb[5]) / (n_shots * weak_meas_rotation_angle * 4) 
-        #print(Bx)
+        AB = (ab[0] + ab[3] - ab[2] - ab[1]) / (
+            n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4
+        )
+        # print(AB)
+        # print("BA")
+        BA = (ab[4] + ab[7] - ab[6] - ab[5]) / (
+            n_shots * weak_meas_rotation_angle * weak_meas_rotation_angle * 4
+        )
+        # print(BA)
+        # print("AxC")
+        AxC = (-ac[0] + ac[3] - ac[2] + ac[1]) / (
+            n_shots * weak_meas_rotation_angle * 4
+        )
+        # print(AxC)
+        # print("xAC")
+        xAC = (-ac[4] + ac[7] - ac[6] + ac[5]) / (
+            n_shots * weak_meas_rotation_angle * 4
+        )
+        # print(xAC)
+        # print("xBC")
+        xBC = (-bc[0] + bc[3] + bc[2] - bc[1]) / (
+            n_shots * weak_meas_rotation_angle * 4
+        )
+        # print(xBC)
+        # print("BxC")
+        BxC = (-bc[4] + bc[7] + bc[6] - bc[5]) / (
+            n_shots * weak_meas_rotation_angle * 4
+        )
+        # print(BxC)
+        # print("Ax")
+        Ax = (-aa[0] + aa[3] - aa[2] + aa[1]) / (n_shots * weak_meas_rotation_angle * 4)
+        # print(Ax)
+        # print("xA")
+        xA = (-aa[4] + aa[7] - aa[6] + aa[5]) / (n_shots * weak_meas_rotation_angle * 4)
+        # print(xA)
+        # print("xB")
+        xB = (-bb[0] + bb[3] + bb[2] - bb[1]) / (n_shots * weak_meas_rotation_angle * 4)
+        # print(xB)
+        # print("Bx")
+        Bx = (-bb[4] + bb[7] + bb[6] - bb[5]) / (n_shots * weak_meas_rotation_angle * 4)
+        # print(Bx)
 
         lg_analysis_results_ba[backend].append((qubit_set, Bx + xA - BA))
         lg_analysis_results_ab[backend].append((qubit_set, Ax + xB - AB))
-        lg_analysis_results_mean[backend].append((qubit_set, (Ax + xB - AB + Bx + xA - BA)/2))
+        lg_analysis_results_mean[backend].append(
+            (qubit_set, (Ax + xB - AB + Bx + xA - BA) / 2)
+        )
 
         order_analysis_results_abc_bac[backend].append((qubit_set, ABC - BAC))
-        order_analysis_results_abc_bac_module[backend].append((qubit_set, abs(ABC - BAC)))
+        order_analysis_results_abc_bac_module[backend].append(
+            (qubit_set, abs(ABC - BAC))
+        )
 
-    backends=["brisbane", "kyiv", "sherbrooke", "simulator"]
+    backends = ["brisbane", "kyiv", "sherbrooke", "simulator"]
 
     # Prepare results for saving
     for backend in backends:
@@ -295,14 +337,15 @@ def main():
         lg_analysis_results_ab[backend].sort(key=lambda x: x[1], reverse=True)
         lg_analysis_results_mean[backend].sort(key=lambda x: x[1], reverse=True)
         order_analysis_results_abc_bac[backend].sort(key=lambda x: x[1], reverse=True)
-        order_analysis_results_abc_bac_module[backend].sort(key=lambda x: x[1], reverse=True)
+        order_analysis_results_abc_bac_module[backend].sort(
+            key=lambda x: x[1], reverse=True
+        )
 
     # Create frames and save results for LG tests
-    for backend in backends:        
+    for backend in backends:
         indices = list(range(len(lg_analysis_results_ba[backend])))
         df = pd.DataFrame(
-            columns=["ba", "ba_val", "ab", "ab_val", "mean", "mean_val"],
-            index=indices
+            columns=["ba", "ba_val", "ab", "ab_val", "mean", "mean_val"], index=indices
         )
 
         for i in indices:
@@ -318,23 +361,24 @@ def main():
     for backend in backends:
         indices = list(range(len(order_analysis_results_abc_bac[backend])))
         df = pd.DataFrame(
-            columns=["abc", "ABC-BAC", "abc_bac", "|ABC-BAC|"],
-            index=indices
+            columns=["abc", "ABC-BAC", "abc_bac", "|ABC-BAC|"], index=indices
         )
 
         for i in indices:
             df.loc[i, "abc"] = order_analysis_results_abc_bac[backend][i][0]
             df.loc[i, "ABC-BAC"] = order_analysis_results_abc_bac[backend][i][1]
             df.loc[i, "abc_bac"] = order_analysis_results_abc_bac_module[backend][i][0]
-            df.loc[i, "|ABC-BAC|"] = order_analysis_results_abc_bac_module[backend][i][1]
+            df.loc[i, "|ABC-BAC|"] = order_analysis_results_abc_bac_module[backend][i][
+                1
+            ]
 
         df.to_csv(f"{results_path}/order_results_{backend}.csv")
-
-
 
     # print(analysis_results_ba)
     # print(analysis_results_ab)
     # print(analysis_results_mean)
 
+
 if __name__ == "__main__":
-    main()
+    # main()
+    find_non_overlaping_triplets()
