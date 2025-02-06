@@ -2,17 +2,16 @@
     This module is the basis for the jobs simulation.
 """
 
+from typing import List
+
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
-from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime import IBMBackend, QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as Sampler
-from qiskit_ibm_runtime import IBMBackend
 from tqdm import tqdm
 
 from src.job import Job, VivianiJob
 from src.utils import *
-
-from typing import List
 
 
 def prepare_jobs(backend_name: str) -> List[Job]:
@@ -51,7 +50,7 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
 
     n_shots = int(1e6)
     # n_shots = 100
-    
+
     # zip_file_name = "LG_sim"
     zip_file_name = "viviani_sim"
 
@@ -66,7 +65,7 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
         print(f"\t\tRunning saving job...")
         job.save_to_file(results_csv, zip_file_name)
 
- 
+
 def main() -> None:
     # backends = ["ibm_brisbane", "ibm_sherbrooke", "ibm_kyiv", "noiseless_simulator"]
     backends = ["noiseless_simulator", "ibm_brisbane"]
