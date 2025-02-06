@@ -5,3 +5,6 @@ log.txt
 *.zip
 settings.json
 *.csv
+.vscode
+desktop.ini
+*.pdf
