@@ -691,3 +691,17 @@ class LG(TestJob):
             os.remove(csv_path)
         except Exception as alert:
             print(alert)
+
+
+class LGSingleGate(LG):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):
+        c.sx(j)
+        c.rz(eps + np.pi / 2, j)
+        c.ecr(i, j)
+        c.rz(np.pi / 2, i)
+        c.x(i)
