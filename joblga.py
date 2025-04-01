@@ -550,7 +550,7 @@ class Weak(TestJob):
             self.indices_list.append(self.va)
 
 
-class LG(TestJob):
+class LGA(TestJob):
 
     def __init__(self) -> None:
         super().__init__()
@@ -606,7 +606,8 @@ class LG(TestJob):
                 # Zdaje się, że a, b, c to flagi sterujące eksperymentem.
                 a = par % 2             # Liczenie kąta pomiaru na qubicie a
                 b = (par // 2) % 2      # Liczenie kąta pomiaru na qubicie b
-                c = par // 4            # Kolejność pomiarów słabych
+                # Kolejność pomiarów słabych
+                c=par//4
 
                 # print(f"a={a}, b={b}, c={c}")
 
@@ -618,45 +619,21 @@ class LG(TestJob):
                 bb = -np.pi / 4
 
                 # Y_+ |0> = 1/sqrt(2) (|0> + |1>) state
-                self.circuits[-1].rz(-np.pi / 2, q[0])
                 self.circuits[-1].sx(q[0])
-                self.circuits[-1].rz(np.pi / 2, q[0])
+                self.circuits[-1].rz(np.pi / 4, q[0])
+                self.circuits[-1].sx(q[0])
 
                 # TODO TR: Refactor that if.
                 if c:
-                    self.circuits[-1].rz(np.pi / 2 + aa, q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi / 2 - aa, q[0])
                     self.we(self.circuits[-1], q[0], q[1], alpha)
-                    self.circuits[-1].rz(-np.pi / 2 + aa, q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi / 2 - aa, q[0])
-
-                    self.circuits[-1].rz(np.pi / 2 + bb, q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi / 2 - bb, q[0])
                     self.we(self.circuits[-1], q[0], q[2], beta)
-                    self.circuits[-1].rz(-np.pi / 2 + bb, q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi / 2 - bb, q[0])
                 else:
-                    self.circuits[-1].rz(np.pi / 2 + bb, q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi / 2 - bb, q[0])
                     self.we(self.circuits[-1], q[0], q[2], beta)
-                    self.circuits[-1].rz(-np.pi / 2 + bb, q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi / 2 - bb, q[0])
-                    self.circuits[-1].rz(np.pi / 2 + aa, q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(-np.pi / 2 - aa, q[0])
-                    self.we(self.circuits[-1], q[0], q[1], alpha)
-                    self.circuits[-1].rz(-np.pi / 2 + aa, q[0])
-                    self.circuits[-1].sx(q[0])
-                    self.circuits[-1].rz(np.pi / 2 - aa, q[0])
-
-                # Prepare initial qubit measurement in Y basis.
-                self.circuits[-1].sx(q[0])           
+                    self.we(self.circuits[-1], q[0], q[1], alpha) 
+                self.circuits[-1].z(q[0])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].rz(np.pi / 4, q[0])
+                self.circuits[-1].sx(q[0])          
                 self.circuits[-1].measure([q[0], q[1], q[2]], cr[i])
 
     def _get_angles_lists(self):
@@ -697,17 +674,8 @@ class LG(TestJob):
             os.remove(csv_path)
         except Exception as alert:
             print(alert)
-    def spa(self):
-        job_result = self.queued_job.result()
-        spans = job_result.metadata["execution"]["execution_spans"]
-        pub0_spans = spans.filter_by_pub(0)
-        for span in pub0_spans:
-            print(span)
-        pub0_spans = spans.filter_by_pub(1)
-        for span in pub0_spans:
-            print(span)
         
-class LGSingleGate(LG):
+class LGASingleGate(LGA):
 
     def __init__(self):
         super().__init__()
@@ -719,20 +687,3 @@ class LGSingleGate(LG):
         c.ecr(i, j)
         c.rz(np.pi / 2, i)
         c.x(i)
-class LGZZ(LG):
-
-    def __init__(self):
-        super().__init__()
-
-    @staticmethod
-    def we(c: QuantumCircuit, i, j, eps):   
-        if eps>=0:
-            c.sx(j) 
-            c.rzz(eps,  i, j)
-            c.rz(np.pi/2,j)
-            c.sx(j)
-        else:
-            c.sx(j)
-            c.rzz(-eps,  i, j)
-            c.rz(-np.pi/2,j)
-            c.sx(j)

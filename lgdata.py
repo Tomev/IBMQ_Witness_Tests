@@ -88,9 +88,16 @@ sh= service.backend("ibm_sherbrooke")
 ky= service.backend("ibm_kyiv")
 ba=[br,sh,ky]
 ers=[[[0,0] for i in range(10)] for j in range(3)]
+era=[[[0,0,0] for i in range(10)] for j in range(3)]
 for x in range(3):
     props=ba[x].properties().to_dict()
     gates=props["gates"]
+    qubs=props["qubits"]
+    for k in range(10):
+        for j in range(3):
+            for s in qubs[qq[x][k][j]]:
+                if s["name"]=='readout_error':
+                    era[x][k][j]=s["value"]
     for g in gates:
         qg=g["qubits"]
         if len(qg)>1:
@@ -103,7 +110,7 @@ for x in range(3):
                 
 nam=["brisbane","sherbrooke","kyiv"]
 for x in range(3):
-    print(nam[x],end="&&&&&\\\\")
+    print(nam[x],end="&&&&&&&&\\\\")
     print()
     for d in range(10):
         #print(qubits_list[d][0],"-",qubits_list[d][1],"-",qubits_list[d][2],sep="",end='&')
@@ -112,7 +119,10 @@ for x in range(3):
         print(f'{qq[x][d][1]}',end="&")
         print(f'{qq[x][d][2]}',end="&")
         print(f'{ers[x][d][0]*100:.2g}',end="&")
-        print(f'{ers[x][d][1]*100:.2g}',end="\\\\")
+        print(f'{ers[x][d][1]*100:.2g}',end="&")
+        print(f'{era[x][d][0]*100:.2g}',end="&")
+        print(f'{era[x][d][1]*100:.2g}',end="&")
+        print(f'{era[x][d][2]*100:.2g}',end="\\\\")
         print()
     print("\\midrule")
 
