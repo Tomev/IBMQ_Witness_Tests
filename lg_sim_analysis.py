@@ -4,7 +4,8 @@ from os import listdir
 import pandas as pd
 
 # Settings
-results_path = "LG_Sim/results"
+results_path = "LGSingleGate_sim/results"
+# results_path = "LG_Sim/results"
 # results_path = "LG_noiseless_sim/results"
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
 
@@ -380,5 +381,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    find_non_overlaping_triplets()
+    main()
+    # find_non_overlaping_triplets()
