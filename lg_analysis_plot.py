@@ -11,10 +11,12 @@ n_qubit_sets = 10
 n_jobs = 60
 
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
+#torino
+#qubits_list=[[2,1,3],[127,126,128]]
 #brisbane:
-qubits_list=[[94, 95, 90],[6, 5, 7], [58, 71, 59], [62, 61, 63], [52, 37, 56], [116, 115, 117], [50, 49, 51], [21, 20, 22], [125, 124, 126], [108, 112, 107]]
+#qubits_list=[[94, 95, 90],[6, 5, 7], [58, 71, 59], [62, 61, 63], [52, 37, 56], [116, 115, 117], [50, 49, 51], [21, 20, 22], [125, 124, 126], [108, 112, 107]]
 #sherbrooke:
-#qubits_list=[[49, 50, 48], [107, 106, 108], [119, 118, 120], [45, 46, 44], [69, 68, 70], [59, 60, 58], [89, 88, 74], [114, 109, 115], [26, 25, 27], [80, 79, 81]]
+qubits_list=[[49, 50, 48], [107, 106, 108], [119, 118, 120], [45, 46, 44], [69, 68, 70], [59, 60, 58], [89, 88, 74], [114, 109, 115], [26, 25, 27], [80, 79, 81]]
 #kyiv:
 #qubits_list=[[53, 60, 41], [114, 115, 113], [0, 1, 14], [68, 69, 55], [26, 16, 25], [4, 3, 15], [103, 102, 104], [82, 83, 81], [54, 45, 64], [33, 20, 39]]
 
@@ -69,7 +71,7 @@ class BellResult:
 def main():
     # metadata = load_json(results_path + '/data.json')
     summed_result = BellResult(pd.DataFrame())
-    results_path = "results-br"
+    results_path = "results"
     for i in range(n_jobs):  # metadata["jobs"]):
         pd_result = pd.read_csv(
             "lgy/"+ results_path + "/results_tests_" + str(i) + ".csv", index_col=0
@@ -361,16 +363,16 @@ def main():
         qubs.append(qubits_list[qubit_set_idx])
         inequality_values_BA.append(Ba + bA - BA)
         inequality_values_AB.append(Ab + aB - AB)
-        inequality_errors_BA.append(sqrt((eBa + ebA + eBA)/n_shots)/(4 * weak_meas_rotation_angle * weak_meas_rotation_angle))
-        inequality_errors_AB.append(sqrt((eAb + eaB + eAB)/n_shots)/(4 * weak_meas_rotation_angle * weak_meas_rotation_angle))
+        inequality_errors_BA.append(sqrt((eBa* weak_meas_rotation_angle + ebA* weak_meas_rotation_angle + eBA)/n_shots)/(4 * weak_meas_rotation_angle * weak_meas_rotation_angle))
+        inequality_errors_AB.append(sqrt((eAb* weak_meas_rotation_angle + eaB* weak_meas_rotation_angle + eAB)/n_shots)/(4 * weak_meas_rotation_angle * weak_meas_rotation_angle))
         inequality_values_BaC.append(Ba - baC + BaC)
         inequality_values_aBC.append(aB - abC + aBC)
-        inequality_errors_BaC.append(sqrt((eBa + ebaC/weak_meas_rotation_angle + eBaC)/n_shots)/(4 * weak_meas_rotation_angle))
-        inequality_errors_aBC.append(sqrt((eaB + eabC/weak_meas_rotation_angle + eaBC)/n_shots)/(4 * weak_meas_rotation_angle))
+        inequality_errors_BaC.append(sqrt((eBa + ebaC*weak_meas_rotation_angle + eBaC)/n_shots)/(4 * weak_meas_rotation_angle))
+        inequality_errors_aBC.append(sqrt((eaB + eabC*weak_meas_rotation_angle + eaBC)/n_shots)/(4 * weak_meas_rotation_angle))
         inequality_values_bAC.append(bA + baC - bAC)
         inequality_values_AbC.append(Ab + abC - AbC)
-        inequality_errors_bAC.append(sqrt((ebA + ebaC/weak_meas_rotation_angle + ebAC)/n_shots)/(4 * weak_meas_rotation_angle))
-        inequality_errors_AbC.append(sqrt((eAb + eabC/weak_meas_rotation_angle + eAbC)/n_shots)/(4 * weak_meas_rotation_angle))
+        inequality_errors_bAC.append(sqrt((ebA + ebaC*weak_meas_rotation_angle + ebAC)/n_shots)/(4 * weak_meas_rotation_angle))
+        inequality_errors_AbC.append(sqrt((eAb + eabC*weak_meas_rotation_angle + eAbC)/n_shots)/(4 * weak_meas_rotation_angle))
         order.append(ABC-BAC)
         eorder.append(sqrt((eABC+eBAC)/n_shots)/(4 * weak_meas_rotation_angle * weak_meas_rotation_angle))
         val_abC.append(abC)
@@ -395,8 +397,8 @@ def main():
         er_bAC.append(sqrt(ebAC/n_shots)/(4 * weak_meas_rotation_angle))
         val_Ab.append(Ab)
         val_bA.append(bA)
-        er_Ab.append(sqrt(eAbC/n_shots)/(4 * weak_meas_rotation_angle))
-        er_bA.append(sqrt(ebAC/n_shots)/(4 * weak_meas_rotation_angle))
+        er_Ab.append(sqrt(eAb/n_shots)/(4 * weak_meas_rotation_angle))
+        er_bA.append(sqrt(ebA/n_shots)/(4 * weak_meas_rotation_angle))
         val_aB.append(aB)
         val_Ba.append(Ba)
         er_aB.append(sqrt(eaB/n_shots)/(4 * weak_meas_rotation_angle))
@@ -455,7 +457,7 @@ def main():
         df.loc[i, "eabC"] = er_abC[i]
         df.loc[i, "Ba"] = val_Ba[i]
         df.loc[i, "eBa"] = er_Ba[i]
-        df.loc[i, "aB"] = er_aB[i]
+        df.loc[i, "aB"] = val_aB[i]
         df.loc[i, "eaB"] = er_aB[i]
         df.loc[i, "bA"] = val_bA[i]
         df.loc[i, "ebA"] = er_bA[i]
