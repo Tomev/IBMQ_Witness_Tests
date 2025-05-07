@@ -751,3 +751,20 @@ class LGCZ(LG):
         c.cz(i,j)
         c.rz(-np.pi / 2, j)
         c.sx(j)
+class LGCZ2(LG):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):   
+        c.cz(i, j)
+        c.sx(j)
+        c.rz(eps+np.pi, j)
+        c.sx(j)
+        c.rz(np.pi, j)
+        c.cz(i, j)
+
+        # Y_-
+        c.rz(np.pi / 2, j)
+        c.sx(j)
