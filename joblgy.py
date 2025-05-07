@@ -591,7 +591,7 @@ class LG(TestJob):
             cr = []
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(3, "cr" + str(i)))
-            qreg = QuantumRegister(127)
+            qreg = QuantumRegister(133)
             # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
@@ -727,12 +727,27 @@ class LGZZ(LG):
     @staticmethod
     def we(c: QuantumCircuit, i, j, eps):   
         if eps>=0:
+            c.rz(-np.pi/2,j)
             c.sx(j) 
             c.rzz(eps,  i, j)
             c.rz(np.pi/2,j)
             c.sx(j)
         else:
+            c.rz(np.pi/2,j)
             c.sx(j)
             c.rzz(-eps,  i, j)
             c.rz(-np.pi/2,j)
             c.sx(j)
+class LGCZ(LG):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):   
+        c.sx(j)
+        c.rz(eps + np.pi, j)
+        c.sx(j)
+        c.cz(i,j)
+        c.rz(-np.pi / 2, j)
+        c.sx(j)
