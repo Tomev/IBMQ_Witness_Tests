@@ -10,7 +10,7 @@ from qiskit_ibm_runtime import IBMBackend, QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from tqdm import tqdm
 
-from src.job import Job, VivianiJob, LGSingleGate
+from src.job import Job, VivianiJob, LGSingleGate, LGZZ
 from src.utils import *
 
 
@@ -20,12 +20,19 @@ def prepare_jobs(backend_name: str) -> List[Job]:
     # Prepare circuits. This is the part to modify.
     if backend_name != "noiseless_simulator":
         print("\tGet target device for LG qubit trilplets extraction...")
+        """
         service: QiskitRuntimeService = QiskitRuntimeService(
                 channel="ibm_quantum",
                 token=TOKENS[TOKEN_VARIABLES[1]],
             )
+        """
+        service: QiskitRuntimeService = QiskitRuntimeService(
+            channel="ibm_cloud",
+            token=os.environ.get("IBMQ_TOKEN_AB_PAID"),
+            instance=os.environ.get("IBMQ_CRN_AB_PAID"),
+        )
 
-        backend: IBMBackend = service.get_backend(backend_name)
+        backend: IBMBackend = service.backend(backend_name, use_fractional_gates=True)
 
         print("\tExtracting LG qubit triplets...")
         qubits: List[List[int]] = [[v['x'], v['a'], v['b']] for v in find_lgi_triplets(backend)]
@@ -38,7 +45,7 @@ def prepare_jobs(backend_name: str) -> List[Job]:
 
     print("\tPreparing LG jobs...")
     for q_list in qubits:
-        job: LGSingleGate = LGSingleGate()
+        job: LGZZ = LGZZ()
         job.add_test_circuits([q_list], epp)
         jobs.append(job)
 
@@ -51,22 +58,29 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
     simulator: AerSimulator = AerSimulator()
 
     if backend_name != "noiseless_simulator":
+        """
         service: QiskitRuntimeService = QiskitRuntimeService(
             channel="ibm_quantum",
             token=TOKENS[TOKEN_VARIABLES[1]],
         )
+        """
+        service: QiskitRuntimeService = QiskitRuntimeService(
+            channel="ibm_cloud",
+            token=os.environ.get("IBMQ_TOKEN_AB_PAID"),
+            instance=os.environ.get("IBMQ_CRN_AB_PAID"),
+        )
 
-        backend: IBMBackend = service.get_backend(backend_name)
+        backend: IBMBackend = service.backend(backend_name, use_fractional_gates=True)
         simulator = simulator.from_backend(backend)
 
     print("\tRunning the circuits...\n")
-    sampler = Sampler(backend=simulator)
+    sampler = Sampler(mode=simulator)
 
     n_shots = 15000000
     # n_shots = 100
 
     # zip_file_name = "LG_sim"
-    zip_file_name = "LGSingleGate_sim"
+    zip_file_name = "LGZZ_sim"
 
     # TR TODO: This probably could be parallelized. Figure out how to do it.
     for j, job in tqdm(enumerate(jobs)):
@@ -81,8 +95,7 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
 
 
 def main() -> None:
-    backends = ["ibm_brisbane", "ibm_sherbrooke", "ibm_kyiv", "noiseless_simulator"]
-    # backends = ["noiseless_simulator", "ibm_brisbane"]
+    backends = ["ibm_kingston", "ibm_fez"]
 
     for backend in backends:
         jobs: List[Job] = prepare_jobs(backend)

@@ -501,7 +501,7 @@ class Weak(TestJob):
             cr = []
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(3, "cr" + str(i)))
-            qreg = QuantumRegister(127)
+            qreg = QuantumRegister(156)
             # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
@@ -583,7 +583,7 @@ class LG(TestJob):
             cr = []
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(3, "cr" + str(i)))
-            qreg = QuantumRegister(127)
+            qreg = QuantumRegister(156)
             # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
@@ -705,3 +705,21 @@ class LGSingleGate(LG):
         c.ecr(i, j)
         c.rz(np.pi / 2, i)
         c.x(i)
+
+class LGZZ(LG):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):   
+        if eps>=0:
+            c.sx(j) 
+            c.rzz(eps,  i, j)
+            c.rz(np.pi/2,j)
+            c.sx(j)
+        else:
+            c.sx(j)
+            c.rzz(-eps,  i, j)
+            c.rz(-np.pi/2,j)
+            c.sx(j)
