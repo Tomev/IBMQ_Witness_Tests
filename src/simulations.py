@@ -1,16 +1,19 @@
 """
-    This module is the basis for the jobs simulation.
+This module is the basis for the jobs simulation.
 """
 
+import sys
+from multiprocessing import Process
 from typing import List
 
+import psutil
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import IBMBackend, QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from tqdm import tqdm
 
-from src.job import Job, VivianiJob, LGSingleGate, LGZZ
+from src.job import LGZZ, Job, LGSingleGate, VivianiJob
 from src.utils import *
 
 
@@ -35,7 +38,9 @@ def prepare_jobs(backend_name: str) -> List[Job]:
         backend: IBMBackend = service.backend(backend_name, use_fractional_gates=True)
 
         print("\tExtracting LG qubit triplets...")
-        qubits: List[List[int]] = [[v['x'], v['a'], v['b']] for v in find_lgi_triplets(backend)]
+        qubits: List[List[int]] = [
+            [v["x"], v["a"], v["b"]] for v in find_lgi_triplets(backend)
+        ]
     else:
         qubits: List[List[int]] = [[0, 1, 2]]
 
@@ -77,16 +82,14 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
     sampler = Sampler(mode=simulator)
 
     n_shots = 15000000
-    # n_shots = 100
+    # n_shots = 100  #PoC check
 
     # zip_file_name = "LG_sim"
     zip_file_name = "LGZZ_sim"
 
     # TR TODO: This probably could be parallelized. Figure out how to do it.
     for j, job in tqdm(enumerate(jobs)):
-
-        print(f"\n\t{backend_name} job {j}.")
-
+        # print(f"\n\t{backend_name} job {j}.")
         print(f"\t\tRunning the job...")
         job.queued_job = sampler.run(job.circuits, shots=n_shots)
         results_csv = f"{backend_name}_{str(job.qubits_list[0])}.csv"
@@ -99,7 +102,19 @@ def main() -> None:
 
     for backend in backends:
         jobs: List[Job] = prepare_jobs(backend)
-        simulate_jobs(jobs, backend)
+
+        for j, job in enumerate(jobs):
+            print(
+                f"\tSpawnig process for job {j} of {len(jobs)}. Memory usage: {psutil.Process().memory_info().rss}"
+            )
+            # Process spawning hack, so that the memory usage is handled properly.
+            p = Process(target=simulate_jobs, args=([job], backend))
+            p.start()
+            p.join()
+            p.terminate()
+            del job
+
+        # simulate_jobs(jobs, backend)
 
 
 if __name__ == "__main__":
