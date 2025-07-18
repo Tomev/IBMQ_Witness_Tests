@@ -726,7 +726,7 @@ class LGZZ(LG):
             c.sx(j)
 
 
-class PB(WitnessJob):
+class PB(TestJob):
     def __init__(self) -> None:
         super().__init__()
 
@@ -752,7 +752,7 @@ class PB(WitnessJob):
             random.shuffle(self.va)
             self.indices_list.append(self.va)
 
-    def add_witness_circuits(self, qubits_list: List[int]) -> None:
+    def add_test_circuits(self, qubits_list: List[int]) -> None:
         self.qubits_list = qubits_list
         self._get_angles_lists()
 
