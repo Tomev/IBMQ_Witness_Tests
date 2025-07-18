@@ -10,7 +10,7 @@ from qiskit_ibm_runtime import IBMBackend, QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from tqdm import tqdm
 
-from src.job import Job, VivianiJob, LGSingleGate, LGZZ
+from src.job import LGZZ, Job, LGSingleGate, VivianiJob
 from src.utils import *
 
 
@@ -35,7 +35,9 @@ def prepare_jobs(backend_name: str) -> List[Job]:
         backend: IBMBackend = service.backend(backend_name, use_fractional_gates=True)
 
         print("\tExtracting LG qubit triplets...")
-        qubits: List[List[int]] = [[v['x'], v['a'], v['b']] for v in find_lgi_triplets(backend)]
+        qubits: List[List[int]] = [
+            [v["x"], v["a"], v["b"]] for v in find_lgi_triplets(backend)
+        ]
     else:
         qubits: List[List[int]] = [[0, 1, 2]]
 
@@ -76,7 +78,7 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
     print("\tRunning the circuits...\n")
     sampler = Sampler(mode=simulator)
 
-    n_shots = 15000000
+    n_shots = 1
     # n_shots = 100
 
     # zip_file_name = "LG_sim"
@@ -92,6 +94,7 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
         results_csv = f"{backend_name}_{str(job.qubits_list[0])}.csv"
         print(f"\t\tRunning saving job...")
         job.save_to_file(results_csv, zip_file_name)
+        del job
 
 
 def main() -> None:
