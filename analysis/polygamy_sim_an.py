@@ -93,7 +93,6 @@ def analyze_polygamy_results(results_path: str, setup: ExperimentSetup):
         sig = 0
         e = 0
         pj = 1 << j
-        # aa = [[0 for k in range(16)] for m in range(16)]
         aa = [[0] * 16] * 16
 
         for k in range(32):
