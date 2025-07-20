@@ -706,20 +706,225 @@ class LGSingleGate(LG):
         c.rz(np.pi / 2, i)
         c.x(i)
 
+
 class LGZZ(LG):
 
     def __init__(self):
         super().__init__()
 
     @staticmethod
-    def we(c: QuantumCircuit, i, j, eps):   
-        if eps>=0:
-            c.sx(j) 
-            c.rzz(eps,  i, j)
-            c.rz(np.pi/2,j)
+    def we(c: QuantumCircuit, i, j, eps):
+        if eps >= 0:
+            c.sx(j)
+            c.rzz(eps, i, j)
+            c.rz(np.pi / 2, j)
             c.sx(j)
         else:
             c.sx(j)
-            c.rzz(-eps,  i, j)
-            c.rz(-np.pi/2,j)
+            c.rzz(-eps, i, j)
+            c.rz(-np.pi / 2, j)
             c.sx(j)
+
+
+class PB(TestJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+
+    @staticmethod
+    def cx0(c: QuantumCircuit, i, j):
+        c.rz(np.pi / 2, j)
+        c.sx(j)
+        c.cz(i, j)
+        c.z(j)
+        c.sx(j)
+        c.rz(np.pi / 2, j)
+
+    def _get_angles_lists(self):
+        for _ in self.qubits_list:
+            self.va = []
+            for _ in range(self.n_repetitions):
+                for i in range(32):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+
+    def add_test_circuits(self, qubits_list: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(32 * self.n_repetitions):
+            cr = []
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(5, "cr" + str(i)))
+
+            qreg = QuantumRegister(max(qubits_list[0]) + 1)
+
+            # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+
+            for i in range(len(qubits_list)):
+                q = qubits_list[i]
+                par = self.indices_list[i][s]
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].s(q[2])
+                self.cx0(self.circuits[-1], q[2], q[3])
+                self.cx0(self.circuits[-1], q[2], q[1])
+                self.cx0(self.circuits[-1], q[3], q[4])
+                self.cx0(self.circuits[-1], q[1], q[0])
+                self.cx0(self.circuits[-1], q[3], q[2])
+                self.circuits[-1].x(q[2])
+
+                """
+                def subcircuit(t, q_o: List[int]) -> None:
+                    self.circuits[-1].z(q[q_o[0]])
+                    self.circuits[-1].s(q[q_o[1]])
+                    self.circuits[-1].sx(q[q_o[1]])
+                    self.circuits[-1].sx(q[q_o[0]])
+                    self.circuits[-1].rzz(t, q[q_o[1]], q[q_o[0]])
+                    self.circuits[-1].sdg(q[q_o[1]])
+                    self.circuits[-1].sdg(q[q_o[0]])
+                    self.circuits[-1].sx(q[q_o[1]])
+                    self.circuits[-1].sx(q[q_o[0]])
+                    self.circuits[-1].rzz(t, q[q_o[1]], q[q_o[0]])
+                    self.circuits[-1].sdg(q[q_o[1]])
+                    self.circuits[-1].sdg(q[q_o[0]])
+                    self.circuits[-1].sx(q[q_o[1]])
+                    self.circuits[-1].sx(q[q_o[0]])
+                    self.circuits[-1].s(q[q_o[0]])
+                    self.circuits[-1].z(q[q_o[1]])
+
+                subcircuit(t=np.arccos(np.sqrt(3 / 5)), q_o = [2,3])
+                """
+                t = np.arccos(np.sqrt(3 / 5))
+                self.circuits[-1].z(q[2])
+                self.circuits[-1].s(q[3])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].rzz(t, q[3], q[2])
+                self.circuits[-1].sdg(q[3])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].rzz(t, q[3], q[2])
+                self.circuits[-1].sdg(q[3])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].s(q[2])
+                self.circuits[-1].z(q[3])
+                t = np.arccos(np.sqrt(1 / 3))
+                # 2-1
+                self.circuits[-1].z(q[2])
+                self.circuits[-1].s(q[1])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].rzz(t, q[1], q[2])
+                self.circuits[-1].sdg(q[1])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].rzz(t, q[1], q[2])
+                self.circuits[-1].sdg(q[1])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].s(q[2])
+                self.circuits[-1].z(q[1])
+                # 3-4
+                t = np.pi / 4
+                self.circuits[-1].z(q[3])
+                self.circuits[-1].s(q[4])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].sx(q[4])
+                self.circuits[-1].rzz(t, q[3], q[4])
+                self.circuits[-1].sdg(q[3])
+                self.circuits[-1].sdg(q[4])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].sx(q[4])
+                self.circuits[-1].rzz(t, q[3], q[4])
+                self.circuits[-1].sdg(q[3])
+                self.circuits[-1].sdg(q[4])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].sx(q[4])
+                self.circuits[-1].s(q[3])
+                self.circuits[-1].z(q[4])
+                # 1-0
+                self.circuits[-1].z(q[1])
+                self.circuits[-1].s(q[0])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].rzz(t, q[1], q[0])
+                self.circuits[-1].sdg(q[1])
+                self.circuits[-1].sdg(q[0])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].rzz(t, q[1], q[0])
+                self.circuits[-1].sdg(q[1])
+                self.circuits[-1].sdg(q[0])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].s(q[1])
+                self.circuits[-1].z(q[0])
+                for kk in range(5):
+                    self.circuits[-1].rz(np.pi / 16, q[kk])
+                    if par % 2 == 0:
+                        self.circuits[-1].s(q[kk])
+                    self.circuits[-1].sx(q[kk])
+                    par //= 2
+                self.circuits[-1].measure([q[0], q[1], q[2], q[3], q[4]], cr[i])
+
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_csv(self, csv_path):
+        result_counts = []
+        job_result = self.queued_job.result()
+        for pub_result in job_result:
+            for i in range(len(self.qubits_list)):
+                result_counts.append(
+                    getattr(pub_result.data, "cr" + str(i)).get_counts()
+                )
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i = []
+        indices_q = []
+        # qubits_list=self.qubits_list
+        for s in range(32 * self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva = self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+
+    def save_to_file(self, csv_path, zip_filename):
+
+        self.save_to_csv(csv_path)
+
+        csv_filename = csv_path.split("/")[-1]
+        with ZipFile(zip_filename + ".zip", "a") as plik_zip:
+            plik_zip.write(csv_path, arcname="results/" + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)

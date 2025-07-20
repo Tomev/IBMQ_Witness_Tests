@@ -8,4 +8,4 @@ settings.json
 .vscode
 desktop.ini
 *.pdf
-.DS_Store*
+*.DS_Store

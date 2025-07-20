@@ -4,7 +4,8 @@ from os import listdir
 import pandas as pd
 
 # Settings
-results_path = "LGSingleGate_sim/results"
+# results_path = "LGSingleGate_sim/results"
+results_path = "LGZZ_sim/results_fez"
 # results_path = "LG_Sim/results"
 # results_path = "LG_noiseless_sim/results"
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
@@ -16,7 +17,7 @@ def to_list(string):
 
 def find_non_overlaping_triplets():
     print("Start")
-    data = pd.read_csv("LG_sim/results/lg_results_brisbane.csv")
+    data = pd.read_csv(f"{results_path}/lg_results_fez.csv")
     qubits_used = []
     triplets = []
 
@@ -85,40 +86,15 @@ class BellResult:
 
 
 def main():
-    lg_analysis_results_ab = {
-        "brisbane": [],
-        "kyiv": [],
-        "sherbrooke": [],
-        "simulator": [],
-    }
+    lg_analysis_results_ab = {"fez": [], "kingston": []}
 
-    lg_analysis_results_ba = {
-        "brisbane": [],
-        "kyiv": [],
-        "sherbrooke": [],
-        "simulator": [],
-    }
+    lg_analysis_results_ba = {"fez": [], "kingston": []}
 
-    lg_analysis_results_mean = {
-        "brisbane": [],
-        "kyiv": [],
-        "sherbrooke": [],
-        "simulator": [],
-    }
+    lg_analysis_results_mean = {"fez": [], "kingston": []}
 
-    order_analysis_results_abc_bac = {
-        "brisbane": [],
-        "kyiv": [],
-        "sherbrooke": [],
-        "simulator": [],
-    }
+    order_analysis_results_abc_bac = {"fez": [], "kingston": []}
 
-    order_analysis_results_abc_bac_module = {
-        "brisbane": [],
-        "kyiv": [],
-        "sherbrooke": [],
-        "simulator": [],
-    }
+    order_analysis_results_abc_bac_module = {"fez": [], "kingston": []}
 
     files = listdir(results_path)
 
@@ -330,7 +306,7 @@ def main():
             (qubit_set, abs(ABC - BAC))
         )
 
-    backends = ["brisbane", "kyiv", "sherbrooke", "simulator"]
+    backends = ["fez", "kingston"]
 
     # Prepare results for saving
     for backend in backends:
@@ -381,5 +357,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    # find_non_overlaping_triplets()
+    # main()
+    find_non_overlaping_triplets()
