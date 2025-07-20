@@ -1,10 +1,11 @@
 """
-    This module is the basis for the jobs simulation.
+This module is the basis for the jobs simulation.
 """
 
 from multiprocessing import Pool
 from typing import List, Optional, Tuple
 
+import psutil
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import IBMBackend, QiskitRuntimeService
@@ -109,7 +110,8 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
     for job in tqdm(jobs):
         simulate_job(job, backend)
         
-        print(f"\n\t{backend_name} job {j}.")
+        # print(f"\n\t{backend_name} job {j}.")
+
         print(f"\t\tRunning the job...")
         job.queued_job = sampler.run(job.circuits, shots=n_shots)
         results_csv = f"{backend_name}_{str(job.qubits_list[0])}.csv"
@@ -125,6 +127,7 @@ def main() -> None:
 
     for backend in backends:
         simulate_jobs(prepare_jobs(backend), backend)
+
 
 
 if __name__ == "__main__":
