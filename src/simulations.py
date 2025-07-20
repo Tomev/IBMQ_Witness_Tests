@@ -2,7 +2,7 @@
     This module is the basis for the jobs simulation.
 """
 
-from typing import List
+from typing import List, Optional, Tuple
 
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
@@ -13,6 +13,12 @@ from tqdm import tqdm
 from src.job import Job, PB
 from src.utils import *
 
+from multiprocessing import Pool
+
+
+# Create folder for results.
+RESULTS_DIR: str = "polygamy_results"
+
 
 def prepare_jobs(backend_name: str) -> List[Job]:
     jobs: List[Job] = []
@@ -20,12 +26,7 @@ def prepare_jobs(backend_name: str) -> List[Job]:
     # Prepare circuits. This is the part to modify.
     if backend_name != "noiseless_simulator":
         print("\tGet target device for Polygamy qubit groups extraction...")
-        """
-        service: QiskitRuntimeService = QiskitRuntimeService(
-                channel="ibm_quantum",
-                token=TOKENS[TOKEN_VARIABLES[1]],
-            )
-        """
+
         service: QiskitRuntimeService = QiskitRuntimeService(
             channel="ibm_cloud",
             token=os.environ.get("IBMQ_TOKEN_AB_PAID"),
@@ -35,11 +36,9 @@ def prepare_jobs(backend_name: str) -> List[Job]:
         backend: IBMBackend = service.backend(backend_name, use_fractional_gates=True)
 
         print("\tExtracting Polygamy qubit groups...")
-        qubits: List[List[int]] = [
-            [v["x"], v["a"], v["b"]] for v in find_lgi_triplets(backend)
-        ]
+        qubits: List[Tuple[int]] = find_polygamy_groups(backend)
     else:
-        qubits: List[List[int]] = [[0,1,2,3,4]]
+        qubits: List[Tuple[int]] = [(0,1,2,3,4)]
 
     print("\tPreparing Polygamy jobs...")
     for q_list in qubits:
@@ -50,18 +49,40 @@ def prepare_jobs(backend_name: str) -> List[Job]:
     return jobs
 
 
+def simulate_job(job: Job, backend: Optional[IBMBackend] = None) -> str:
+
+    # simulator: AerSimulator = AerSimulator(device="GPU")  # May work sometime.
+    simulator: AerSimulator = AerSimulator()
+
+    if backend:
+        simulator = simulator.from_backend(backend)
+        backend_name = backend.name
+    else: 
+        backend_name: str = "noiseless_simulator"
+
+    sampler: Sampler = Sampler(mode=simulator)
+    
+    n_shots: int = 60000
+    results_file: str = f"{backend_name}_{job.qubits_list[0]}.csv"
+    results_path: str = os.path.join(RESULTS_DIR, results_file)
+
+    print(f"\t\tRunning the job...")
+    job.queued_job = sampler.run(job.circuits, shots=n_shots)
+    
+    print(f"\t\tSaving job to {results_path}...")
+    job.save_to_csv(results_path)
+
+    del job
+
+
 def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") -> None:
     print(f"\tPreparing {backend_name} simulator...")
 
-    simulator: AerSimulator = AerSimulator()
+    # If backend is not specified, we use the noiseless simulator.
+    backend: Optional[IBMBackend] = None
 
     if backend_name != "noiseless_simulator":
-        """
-        service: QiskitRuntimeService = QiskitRuntimeService(
-            channel="ibm_quantum",
-            token=TOKENS[TOKEN_VARIABLES[1]],
-        )
-        """
+
         service: QiskitRuntimeService = QiskitRuntimeService(
             channel="ibm_cloud",
             token=os.environ.get("IBMQ_TOKEN_AB_PAID"),
@@ -69,37 +90,46 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
         )
 
         backend: IBMBackend = service.backend(backend_name, use_fractional_gates=True)
-        simulator = simulator.from_backend(backend)
+
+    if not os.path.exists(RESULTS_DIR):
+        os.makedirs(RESULTS_DIR)
+
+    print(f"\tRunning circuits transpilation...")
+    pm = generate_preset_pass_manager(optimization_level=0, backend=backend)
+    
+    for job in tqdm(jobs):
+        for i in range(len(job.circuits)):
+            job.circuits[i] = pm.run(job.circuits[i])
 
     print("\tRunning the circuits...\n")
-    sampler = Sampler(mode=simulator)
 
-    # n_shots = 1
-    n_shots = 100
+    with Pool() as pool:
+       pool.starmap(simulate_job, [(job, backend) for job in jobs])
 
-    # zip_file_name = "LG_sim"
-    zip_file_name = "PB_sim"
-
-    # TR TODO: This probably could be parallelized. Figure out how to do it.
-    for j, job in tqdm(enumerate(jobs)):
-
+    
+    # TR: Sequential execution.
+    """        
+    for job in tqdm(jobs):
+        simulate_job(job, backend)
+        
         print(f"\n\t{backend_name} job {j}.")
-
         print(f"\t\tRunning the job...")
         job.queued_job = sampler.run(job.circuits, shots=n_shots)
         results_csv = f"{backend_name}_{str(job.qubits_list[0])}.csv"
         print(f"\t\tRunning saving job...")
-        job.save_to_file(results_csv, zip_file_name)
+        job.save_to_csv(results_csv)
         del job
+    """
+
+
 
 
 def main() -> None:
-    # backends = ["ibm_kingston", "ibm_fez"]
-    backends = ["noiseless_simulator"]
-
+    backends = ["ibm_torino", "ibm_kingston"]
+    # backends = ["noiseless_simulator"]
+    
     for backend in backends:
-        jobs: List[Job] = prepare_jobs(backend)
-        simulate_jobs(jobs, backend)
+        simulate_jobs(prepare_jobs(backend), backend)
 
 
 if __name__ == "__main__":
