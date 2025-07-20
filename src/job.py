@@ -1,5 +1,5 @@
 """
-This script stores our Job classes. 
+This script stores our Job classes.
 """
 
 import os
@@ -392,7 +392,7 @@ class TestJob(Job):
         """
         raise NotImplementedError
 
-    def save_to_csv(self, csv_path):
+    def save_to_csv(self, csv_path: str):
         result_counts = []
 
         job_result = self.queued_job.result()
@@ -428,7 +428,7 @@ class Weak(TestJob):
         self.qubits_dir = []
 
     @staticmethod
-    def we(c: QuantumCircuit, i, j, eps):
+    def we(c: QuantumCircuit, i: int, j: int, eps: float):
         c.ecr(i, j)
         c.rz(eps, j)
         c.ecr(i, j)
@@ -503,7 +503,7 @@ class LG(TestJob):
         self.qubits_dir = []
 
     @staticmethod
-    def we(c: QuantumCircuit, i, j, eps):
+    def we(c: QuantumCircuit, i: int, j: int, eps: float):
 
         c.ecr(i, j)
         c.rz(eps, j)
@@ -603,9 +603,11 @@ class LG(TestJob):
             random.shuffle(self.va)
             self.indices_list.append(self.va)
 
-    def save_to_file(self, csv_path):
+    def save_to_file(self, csv_path: str):
+
         result_counts = []
         job_result = self.queued_job.result()
+
         for pub_result in job_result:
             for i in range(len(self.qubits_list)):
                 result_counts.append(
@@ -633,7 +635,7 @@ class LGSingleGate(LG):
         super().__init__()
 
     @staticmethod
-    def we(c: QuantumCircuit, i, j, eps):
+    def we(c: QuantumCircuit, i: int, j: int, eps: float):
         c.sx(j)
         c.rz(eps + np.pi / 2, j)
         c.ecr(i, j)
@@ -647,7 +649,7 @@ class LGZZ(LG):
         super().__init__()
 
     @staticmethod
-    def we(c: QuantumCircuit, i, j, eps):
+    def we(c: QuantumCircuit, i: int, j: int, eps: float):
 
         sgn: int = 1 if eps >= 0 else -1
 
@@ -658,12 +660,15 @@ class LGZZ(LG):
 
 
 class PB(TestJob):
+    """Polygamy tests"""
+
     def __init__(self) -> None:
         super().__init__()
 
         self.indices_list = []
-        self.n_repetitions = 1
+        self.n_repetitions: int = 1
         self.qubits_list = []
+        self.n_circuts: int = 32
 
     @staticmethod
     def cx0(c: QuantumCircuit, i: int, j: int) -> None:
@@ -674,26 +679,23 @@ class PB(TestJob):
         c.sx(j)
         c.rz(np.pi / 2, j)
 
-    def _get_angles_lists(self):
+    def _get_angles_lists(self) -> None:
+
         for _ in self.qubits_list:
-            self.va = []
-            for _ in range(self.n_repetitions):
-                for i in range(32):
-                    self.va.append(i)
+            self.va: List[int] = list(range(self.n_circuts)) * self.n_repetitions
             random.shuffle(self.va)
             self.indices_list.append(self.va)
 
     def add_test_circuits(self, qubits_list: List[int]) -> None:
         self.qubits_list = qubits_list
         self._get_angles_lists()
-
         self.circuits.clear()
-        for s in range(32 * self.n_repetitions):
+        for s in range(self.n_circuts * self.n_repetitions):
             cr = []
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(5, "cr" + str(i)))
 
-            qreg = QuantumRegister(max(qubits_list[0]) + 1)
+            qreg: QuantumRegister = QuantumRegister(max(qubits_list[0]) + 1)
 
             # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
@@ -809,7 +811,7 @@ class PB(TestJob):
                     par //= 2
                 self.circuits[-1].measure([q[0], q[1], q[2], q[3], q[4]], cr[i])
 
-    def save_to_csv(self, csv_path):
+    def save_to_csv(self, csv_path: str) -> None:
         result_counts = []
         job_result = self.queued_job.result()
         for pub_result in job_result:
@@ -820,8 +822,8 @@ class PB(TestJob):
         pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
         indices_i = []
         indices_q = []
-        # qubits_list=self.qubits_list
-        for s in range(32 * self.n_repetitions):
+
+        for s in range(self.n_circuts * self.n_repetitions):
             for q in range(len(self.qubits_list)):
                 iva = self.indices_list[q][s]
                 indices_i.append(iva)
