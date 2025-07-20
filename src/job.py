@@ -52,17 +52,20 @@ class Job:
             self.circuits.append(circuit_test_0)
             self.circuits.append(circuit_test_1)
 
-    def update_status(self):
+    def update_status(self) -> Optional[bool]:
         status_before_update = self.last_status
-        self.last_status = self.queued_job.status().name
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
 
-        if_changed = True
+        if_changed: Optional[bool] = None
         if self.last_status == status_before_update:
             if_changed = False
-
+        else:
+            if_changed = True
         return if_changed
 
-    # Zapis danych do pliku
     def save_to_file(self, csv_path, zip_filename):
 
         results = self.get_counts_from_job_results(self.queued_job)
@@ -270,6 +273,7 @@ class WitnessJob(Job):
 
 
 class WitnessJobParameterized(WitnessJob):
+
     def add_witness_circuits(self, parameters) -> None:
         angles_dicts = self._get_angles_lists(parameters)
 
@@ -877,20 +881,6 @@ class PB(TestJob):
                     self.circuits[-1].sx(q[kk])
                     par //= 2
                 self.circuits[-1].measure([q[0], q[1], q[2], q[3], q[4]], cr[i])
-
-    def update_status(self) -> bool:
-        status_before_update = self.last_status
-        try:
-            self.last_status = self.queued_job.status().name
-        except:
-            self.last_status = self.queued_job.status()
-
-        if_changed = None
-        if self.last_status == status_before_update:
-            if_changed = False
-        else:
-            if_changed = True
-        return if_changed
 
     def save_to_csv(self, csv_path):
         result_counts = []
