@@ -1,5 +1,5 @@
 """
-    This module contains utulity functions for our jobs.
+This module contains utulity functions for our jobs.
 """
 
 __author__ = "Tomasz Rybotycki"

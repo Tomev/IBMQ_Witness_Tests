@@ -129,7 +129,6 @@ def main() -> None:
         simulate_jobs(prepare_jobs(backend), backend)
 
 
-
 if __name__ == "__main__":
     print("Start")
     main()
