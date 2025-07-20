@@ -6,7 +6,6 @@ import os
 import random
 from abc import abstractmethod
 from typing import Dict, List
-from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
@@ -66,38 +65,20 @@ class Job:
             if_changed = True
         return if_changed
 
-    def save_to_file(self, csv_path, zip_filename):
+    def save_to_csv(self, csv_path: str) -> None:
 
         results = self.get_counts_from_job_results(self.queued_job)
 
         results = self.queued_job.result().get_counts()
-        tabela = pd.DataFrame.from_dict(results).fillna(0)
+        data_frame: pd.DataFrame = pd.DataFrame.from_dict(results).fillna(0)
 
         theta = []
-        # część testowa
-        # for i in range(0, 2 * self.test_circuits_number):
-        #   theta.append("TEST")
-        # kąty w odpowiedniej kolejności
-        # theta.extend(self.parameters_list)
+
         for n in range(101):
             theta.append(f"Test_Circuit_n_{n}")
 
-        print(tabela)
-
-        # dodanie właściwej kolumny do danych
-        tabela["theta"] = theta
-        tabela.to_csv(csv_path)
-
-        csv_filename = csv_path.split("/")[-1]
-        with ZipFile(zip_filename + ".zip", "a") as plik_zip:
-            plik_zip.write(csv_path, arcname="results/" + csv_filename)
-
-        self.if_saved = True
-
-        try:
-            os.remove(csv_path)
-        except Exception as alert:
-            print(alert)
+        data_frame["theta"] = theta
+        data_frame.to_csv(csv_path)
 
     @staticmethod
     def get_counts_from_job_results(job):
@@ -180,6 +161,7 @@ class RotationJob(Job):
 
 
 class WitnessJob(Job):
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -240,36 +222,25 @@ class WitnessJob(Job):
         return angles_dicts
 
     @staticmethod
-    def s_gate(circuit: QuantumCircuit, theta: float, qubit=0):
+    def s_gate(circuit: QuantumCircuit, theta: float, qubit=0) -> None:
         circuit.rz(theta, qubit=qubit)
         circuit.sx(qubit=qubit)
         circuit.rz(-theta, qubit=qubit)
 
     @staticmethod
-    def s_gate_last(circuit: QuantumCircuit, theta: float):
+    def s_gate_last(circuit: QuantumCircuit, theta: float) -> None:
         circuit.rz(theta, qubit=0)
         circuit.sx(qubit=0)
 
-    def save_to_file(self, csv_path, zip_filename):
+    def save_to_csv(self, csv_path: str) -> None:
         result_counts = self.queued_job.result().get_counts()
-        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        pandas_table: pd.DataFrame = pd.DataFrame.from_dict(result_counts).fillna(0)
 
         indices_i, indices_j = self.indices_list.transpose()
         pandas_table["i"] = indices_i
         pandas_table["j"] = indices_j
 
-        # Saving to file
         pandas_table.to_csv(csv_path)
-        csv_filename = csv_path.split("/")[-1]
-        with ZipFile(zip_filename + ".zip", "a") as plik_zip:
-            plik_zip.write(csv_path, arcname="results/" + csv_filename)
-
-        self.if_saved = True
-
-        try:
-            os.remove(csv_path)
-        except Exception as alert:
-            print(alert)
 
 
 class WitnessJobParameterized(WitnessJob):
@@ -322,9 +293,9 @@ class WitnessJobParameterized(WitnessJob):
 
         return angles_dicts
 
-    def save_to_file(self, csv_path, zip_filename):
+    def save_to_csv(self, csv_path, zip_filename):
         result_counts = self.queued_job.result().get_counts()
-        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        pandas_table: pd.DataFrame = pd.DataFrame.from_dict(result_counts).fillna(0)
 
         indices_n, indices_j = self.indices_list.transpose()
         pandas_table["n"] = indices_n
@@ -332,16 +303,6 @@ class WitnessJobParameterized(WitnessJob):
 
         # Saving to file
         pandas_table.to_csv(csv_path)
-        csv_filename = csv_path.split("/")[-1]
-        with ZipFile(zip_filename + ".zip", "a") as plik_zip:
-            plik_zip.write(csv_path, arcname="results/" + csv_filename)
-
-        self.if_saved = True
-
-        try:
-            os.remove(csv_path)
-        except Exception as alert:
-            print(alert)
 
 
 class VivianiJob(WitnessJob):
@@ -392,20 +353,19 @@ class VivianiJob(WitnessJob):
                         self.va.append([i, j])
 
             random.shuffle(self.va)
-            # print(*self.va)
+
             self.indices_list.append(self.va)
 
-    def save_to_file(self, csv_path, zip_filename):
+    def save_to_csv(self, csv_path):
         result_counts = self.get_counts_from_job_results(self.queued_job)
-        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        pandas_table: pd.DataFrame = pd.DataFrame.from_dict(result_counts).fillna(0)
         indices_i = []
         indices_j = []
-        print(self.n_repetitions)
-        listvert = self.qubits_list
+
         for s in range(20 * self.n_repetitions):
-            iva = 0
-            ivb = 0
-            for q in range(len(listvert)):
+            iva: float = 0
+            ivb: float = 0
+            for q in range(len(self.qubits_list)):
                 iva += 5**q * self.indices_list[q][s][0]
                 ivb += 4**q * self.indices_list[q][s][1]
             indices_i.append(iva)
@@ -415,16 +375,6 @@ class VivianiJob(WitnessJob):
 
         # Saving to file
         pandas_table.to_csv(csv_path)
-        csv_filename = csv_path.split("/")[-1]
-        with ZipFile(zip_filename + ".zip", "a") as plik_zip:
-            plik_zip.write(csv_path, arcname="results/" + csv_filename)
-
-        self.if_saved = True
-
-        try:
-            os.remove(csv_path)
-        except Exception as alert:
-            print(alert)
 
 
 class TestJob(Job):
@@ -442,7 +392,7 @@ class TestJob(Job):
         """
         raise NotImplementedError
 
-    def save_to_file(self, csv_path, zip_filename):
+    def save_to_csv(self, csv_path):
         result_counts = []
 
         job_result = self.queued_job.result()
@@ -451,7 +401,7 @@ class TestJob(Job):
                 result_counts.append(
                     getattr(pub_result.data, "cr" + str(i)).get_counts()
                 )
-        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        pandas_table: pd.DataFrame = pd.DataFrame.from_dict(result_counts).fillna(0)
 
         indices_i = []
         indices_q = []
@@ -466,15 +416,6 @@ class TestJob(Job):
 
         # Saving to file
         pandas_table.to_csv(csv_path)
-        csv_filename = csv_path.split("/")[-1]
-        with ZipFile(zip_filename + ".zip", "a") as plik_zip:
-            plik_zip.write(csv_path, arcname="results/" + csv_filename)
-        self.if_saved = True
-
-        try:
-            os.remove(csv_path)
-        except Exception as alert:
-            print(alert)
 
 
 class Weak(TestJob):
@@ -501,12 +442,10 @@ class Weak(TestJob):
 
         self.circuits.clear()
         for s in range(8 * self.n_repetitions):
-            # self.circuits.append(QuantumCircuit(127, len(listvert)))
             cr = []
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(3, "cr" + str(i)))
-            qreg = QuantumRegister(156)
-            # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            qreg = QuantumRegister(156)  # TODO TR: This cannot be a magic number.
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
                 q = qubits_list[i]
@@ -664,7 +603,7 @@ class LG(TestJob):
             random.shuffle(self.va)
             self.indices_list.append(self.va)
 
-    def save_to_file(self, csv_path, zip_filename):
+    def save_to_file(self, csv_path):
         result_counts = []
         job_result = self.queued_job.result()
         for pub_result in job_result:
@@ -672,10 +611,11 @@ class LG(TestJob):
                 result_counts.append(
                     getattr(pub_result.data, "cr" + str(i)).get_counts()
                 )
-        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+
+        pandas_table: pd.DataFrame = pd.DataFrame.from_dict(result_counts).fillna(0)
         indices_i = []
         indices_q = []
-        # qubits_list=self.qubits_list
+
         for s in range(8 * self.n_repetitions):
             for q in range(len(self.qubits_list)):
                 iva = self.indices_list[q][s]
@@ -684,17 +624,7 @@ class LG(TestJob):
         pandas_table["i"] = indices_i
         pandas_table["q"] = indices_q
 
-        # Saving to file
         pandas_table.to_csv(csv_path)
-        csv_filename = csv_path.split("/")[-1]
-        with ZipFile(zip_filename + ".zip", "a") as plik_zip:
-            plik_zip.write(csv_path, arcname="results/" + csv_filename)
-        self.if_saved = True
-
-        try:
-            os.remove(csv_path)
-        except Exception as alert:
-            print(alert)
 
 
 class LGSingleGate(LG):
@@ -718,16 +648,13 @@ class LGZZ(LG):
 
     @staticmethod
     def we(c: QuantumCircuit, i, j, eps):
-        if eps >= 0:
-            c.sx(j)
-            c.rzz(eps, i, j)
-            c.rz(np.pi / 2, j)
-            c.sx(j)
-        else:
-            c.sx(j)
-            c.rzz(-eps, i, j)
-            c.rz(-np.pi / 2, j)
-            c.sx(j)
+
+        sgn: int = 1 if eps >= 0 else -1
+
+        c.sx(j)
+        c.rzz(sgn * eps, i, j)
+        c.rz(sgn * np.pi / 2, j)
+        c.sx(j)
 
 
 class PB(TestJob):
@@ -739,7 +666,7 @@ class PB(TestJob):
         self.qubits_list = []
 
     @staticmethod
-    def cx0(c: QuantumCircuit, i, j):
+    def cx0(c: QuantumCircuit, i: int, j: int) -> None:
         c.rz(np.pi / 2, j)
         c.sx(j)
         c.cz(i, j)
@@ -904,17 +831,3 @@ class PB(TestJob):
 
         # Saving to file
         pandas_table.to_csv(csv_path)
-
-    def save_to_file(self, csv_path, zip_filename):
-
-        self.save_to_csv(csv_path)
-
-        csv_filename = csv_path.split("/")[-1]
-        with ZipFile(zip_filename + ".zip", "a") as plik_zip:
-            plik_zip.write(csv_path, arcname="results/" + csv_filename)
-        self.if_saved = True
-
-        try:
-            os.remove(csv_path)
-        except Exception as alert:
-            print(alert)
