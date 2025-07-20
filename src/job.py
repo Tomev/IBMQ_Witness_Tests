@@ -742,7 +742,7 @@ class PB(TestJob):
         c.z(j)
         c.sx(j)
         c.rz(np.pi / 2, j)
-    
+
     def _get_angles_lists(self):
         for _ in self.qubits_list:
             self.va = []
@@ -766,7 +766,7 @@ class PB(TestJob):
 
             # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
-            
+
             for i in range(len(qubits_list)):
                 q = qubits_list[i]
                 par = self.indices_list[i][s]
@@ -778,7 +778,7 @@ class PB(TestJob):
                 self.cx0(self.circuits[-1], q[1], q[0])
                 self.cx0(self.circuits[-1], q[3], q[2])
                 self.circuits[-1].x(q[2])
-                
+
                 """
                 def subcircuit(t, q_o: List[int]) -> None:
                     self.circuits[-1].z(q[q_o[0]])
@@ -800,7 +800,7 @@ class PB(TestJob):
 
                 subcircuit(t=np.arccos(np.sqrt(3 / 5)), q_o = [2,3])
                 """
-                t=np.arccos(np.sqrt(3/5))
+                t = np.arccos(np.sqrt(3 / 5))
                 self.circuits[-1].z(q[2])
                 self.circuits[-1].s(q[3])
                 self.circuits[-1].sx(q[3])
@@ -878,8 +878,6 @@ class PB(TestJob):
                     par //= 2
                 self.circuits[-1].measure([q[0], q[1], q[2], q[3], q[4]], cr[i])
 
-    
-
     def update_status(self) -> bool:
         status_before_update = self.last_status
         try:
@@ -918,7 +916,7 @@ class PB(TestJob):
         pandas_table.to_csv(csv_path)
 
     def save_to_file(self, csv_path, zip_filename):
-        
+
         self.save_to_csv(csv_path)
 
         csv_filename = csv_path.split("/")[-1]

@@ -8,7 +8,6 @@ import pandas as pd
 from utils import ExperimentSetup
 
 
-
 def load_json(json_file_path):
     with open(json_file_path, "r") as json_file:
         json_data = json.load(json_file)

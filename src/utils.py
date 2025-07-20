@@ -5,14 +5,13 @@
 __author__ = "Tomasz Rybotycki"
 
 import os
+from dataclasses import dataclass
 from itertools import combinations, product
 from typing import Dict, Iterable, List, Tuple
 from zipfile import ZipFile
 
 from qiskit_ibm_runtime.ibm_backend import IBMBackend
 from tqdm import tqdm
-
-from dataclasses import dataclass
 
 from src.settings import *
 
@@ -21,6 +20,7 @@ from src.settings import *
 class ExperimentSetup:
     backend: str
     qubit_group: List[int]
+
 
 def experiments_clean_up(job_list_path: str) -> None:
     with ZipFile(ZIP_FILE_NAME + ".zip", "a") as zip_file:
@@ -118,7 +118,7 @@ def find_polygamy_groups(backend: IBMBackend) -> List[List[int]]:
     Brute-force search for all qubits that satisfy connections required
     for the Polygamy experiment.
 
-    For each qubit 
+    For each qubit
 
     :note:
         Full brute-force won't work, as there is too much combinations to
@@ -153,15 +153,17 @@ def find_polygamy_groups(backend: IBMBackend) -> List[List[int]]:
         # Generate all combinations of neighbors of the current qubit.
         for group in combinations(neighbors, 2):
             # Now we need second level neighbors of the group.
-            # For qubit 2 and qubit 4 of the neighbors. 
+            # For qubit 2 and qubit 4 of the neighbors.
             q2_neighbors: List[int] = find_qubit_neighbors(backend, group[0])
             q4_neighbors: List[int] = find_qubit_neighbors(backend, group[1])
 
             if len(q2_neighbors) < 1 or len(q4_neighbors) < 1:
                 continue
 
-            for l2_neighbor in product(q2_neighbors, q4_neighbors):    
-                polygamy_groups.append((l2_neighbor[0], group[0], qubit, group[1], l2_neighbor[1]))
+            for l2_neighbor in product(q2_neighbors, q4_neighbors):
+                polygamy_groups.append(
+                    (l2_neighbor[0], group[0], qubit, group[1], l2_neighbor[1])
+                )
 
     # Filter groups.
     polygamy_groups = [g for g in polygamy_groups if len(set(g)) == group_len]
@@ -170,4 +172,3 @@ def find_polygamy_groups(backend: IBMBackend) -> List[List[int]]:
     #    print(g)
 
     return polygamy_groups
-        
