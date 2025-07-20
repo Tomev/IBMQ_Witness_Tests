@@ -5,11 +5,8 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+from utils import ExperimentSetup
 
-@dataclass
-class ExperimentSetup:
-    backend: str
-    qubit_group: List[int]
 
 
 def load_json(json_file_path):

@@ -12,8 +12,15 @@ from zipfile import ZipFile
 from qiskit_ibm_runtime.ibm_backend import IBMBackend
 from tqdm import tqdm
 
+from dataclasses import dataclass
+
 from src.settings import *
 
+
+@dataclass
+class ExperimentSetup:
+    backend: str
+    qubit_group: List[int]
 
 def experiments_clean_up(job_list_path: str) -> None:
     with ZipFile(ZIP_FILE_NAME + ".zip", "a") as zip_file:
