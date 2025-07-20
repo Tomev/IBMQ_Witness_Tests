@@ -758,12 +758,11 @@ class PB(TestJob):
 
         self.circuits.clear()
         for s in range(32 * self.n_repetitions):
-            # self.circuits.append(QuantumCircuit(127, len(listvert)))
             cr = []
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(5, "cr" + str(i)))
 
-            qreg = QuantumRegister(156)
+            qreg = QuantumRegister(max(qubits_list[0]) + 1)
 
             # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
@@ -895,7 +894,7 @@ class PB(TestJob):
             if_changed = True
         return if_changed
 
-    def save_to_file(self, csv_path, zip_filename):
+    def save_to_csv(self, csv_path):
         result_counts = []
         job_result = self.queued_job.result()
         for pub_result in job_result:
@@ -917,6 +916,11 @@ class PB(TestJob):
 
         # Saving to file
         pandas_table.to_csv(csv_path)
+
+    def save_to_file(self, csv_path, zip_filename):
+        
+        self.save_to_csv(csv_path)
+
         csv_filename = csv_path.split("/")[-1]
         with ZipFile(zip_filename + ".zip", "a") as plik_zip:
             plik_zip.write(csv_path, arcname="results/" + csv_filename)
