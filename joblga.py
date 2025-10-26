@@ -591,7 +591,7 @@ class LGA(TestJob):
             cr = []
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(3, "cr" + str(i)))
-            qreg = QuantumRegister(127)
+            qreg = QuantumRegister(156)
             # self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
@@ -687,3 +687,94 @@ class LGASingleGate(LGA):
         c.ecr(i, j)
         c.rz(np.pi / 2, i)
         c.x(i)
+class LGACZ(LGA):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):   
+        c.sx(j)
+        c.rz(eps + np.pi, j)
+        c.sx(j)
+        c.cz(i,j)
+        c.rz(-np.pi / 2, j)
+        c.sx(j)
+class LGACZ2(LGA):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):   
+        c.cz(i, j)
+        c.sx(j)
+        c.rz(eps+np.pi, j)
+        c.sx(j)
+        c.rz(np.pi, j)
+        c.cz(i, j)
+
+        # Y_-
+        c.rz(np.pi / 2, j)
+        c.sx(j)
+class LGACZX(LGA):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):   
+        c.rx(eps,j)
+        c.cz(i,j)
+        c.rz(np.pi, j)
+        c.sx(j)
+class LGACZ2X(LGA):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):
+        c.cz(i, j)
+        c.rx(eps,j)
+        c.cz(i,j)
+        c.rz(np.pi, j)
+        c.sx(j)
+class LGAZZ(LGA):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):   
+        if eps>=0:
+            c.rz(-np.pi/2,j)
+            c.sx(j) 
+            c.rzz(eps,  i, j)
+            c.rz(np.pi/2,j)
+            c.sx(j)
+        else:
+            c.rz(np.pi/2,j)
+            c.sx(j)
+            c.rzz(-eps,  i, j)
+            c.rz(-np.pi/2,j)
+            c.sx(j)
+class LGAZZ0(LGA):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def we(c: QuantumCircuit, i, j, eps):   
+        if eps>=0:
+            c.rz(-np.pi/2,j)
+            c.sx(j) 
+            c.rzz(eps,  i, j)
+            c.rz(np.pi/2,j)
+            c.sx(j)
+        else:
+            c.rz(-np.pi/2,j)
+            c.sx(j) 
+            c.rzz(0,  i, j)
+            c.rz(np.pi/2,j)
+            c.sx(j)

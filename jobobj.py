@@ -969,7 +969,7 @@ class PB4(WitnessJob):
             cr=[]
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(4, "cr"+str(i)))
-            qreg = QuantumRegister(156)
+            qreg = QuantumRegister(133)
             #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
             self.circuits.append(QuantumCircuit(qreg, *cr))
             for i in range(len(qubits_list)):
@@ -987,27 +987,25 @@ class PB4(WitnessJob):
                 self.circuits[-1].rx(2*aa,q[1])
                 self.circuits[-1].s(q[1])
                 self.cx0(self.circuits[-1],q[1],q[2])
-                self.cx0(self.circuits[-1],q[1],q[0])              
-                self.cx0(self.circuits[-1],q[2],q[3])
+                self.circuits[-1].rz(np.pi/2,q[0])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].cz(q[1],q[0])
+                self.circuits[-1].rz(np.pi/2,q[3])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].cz(q[2],q[3])
                 self.circuits[-1].z(q[1])
                 self.circuits[-1].sx(q[1])
                 self.circuits[-1].z(q[1])
-                self.circuits[-1].rzz(-cc,q[1],q[2])
-                self.circuits[-1].rz(cc,q[1])
-                self.circuits[-1].sx(q[1])
-                self.circuits[-1].x(q[2])
-                self.circuits[-1].z(q[1])
-                self.circuits[-1].sx(q[1])
-                self.circuits[-1].z(q[1])
-                self.circuits[-1].rzz(bb,q[1],q[2])
-                self.circuits[-1].rz(-bb,q[1])
-                self.circuits[-1].sx(q[1])
-                self.circuits[-1].x(q[2])
+                self.circuits[-1].rzz(-(bb+cc),q[1],q[2])
+                self.circuits[-1].rz(-(bb-cc),q[1])
+                #self.circuits[-1].sx(q[1])
                 t=np.pi/4
                 #2-1
                 self.circuits[-1].s(q[1])
                 self.circuits[-1].s(q[2])
+                
                 self.circuits[-1].sx(q[1])
+                self.circuits[-1].s(q[1]) #reduction
                 self.circuits[-1].sx(q[2])
                 self.circuits[-1].rzz(t,q[1],q[2])
                 self.circuits[-1].sdg(q[1])
@@ -1017,16 +1015,15 @@ class PB4(WitnessJob):
                 self.circuits[-1].rzz(t,q[1],q[2])
                 self.circuits[-1].sdg(q[1])
                 self.circuits[-1].sdg(q[2])
-                self.circuits[-1].sx(q[1])
-                self.circuits[-1].sx(q[2])
-                self.circuits[-1].z(q[1])
-                self.circuits[-1].z(q[2])
-
+                #self.circuits[-1].sx(q[1])
+                #self.circuits[-1].sx(q[2])
+                #self.circuits[-1].z(q[1])
+                #self.circuits[-1].z(q[2])
                 #2-3
-                self.circuits[-1].s(q[2])
-                self.circuits[-1].s(q[3])
+                #self.circuits[-1].s(q[2])
+                self.circuits[-1].sdg(q[2])
                 self.circuits[-1].sx(q[2])
-                self.circuits[-1].sx(q[3])
+                self.circuits[-1].sdg(q[2])
                 self.circuits[-1].rzz(t,q[2],q[3])
                 self.circuits[-1].z(q[2])
                 self.circuits[-1].z(q[3])
@@ -1044,10 +1041,10 @@ class PB4(WitnessJob):
                 self.circuits[-1].z(q[2])
                 self.circuits[-1].z(q[3])
                 #1-0
-                self.circuits[-1].s(q[1])
-                self.circuits[-1].s(q[0])
+                #self.circuits[-1].s(q[1])
+                self.circuits[-1].sdg(q[1])
                 self.circuits[-1].sx(q[1])
-                self.circuits[-1].sx(q[0])
+                self.circuits[-1].sdg(q[1])
                 self.circuits[-1].rzz(t,q[1],q[0])
                 self.circuits[-1].z(q[0])
                 self.circuits[-1].z(q[1])
@@ -1068,6 +1065,431 @@ class PB4(WitnessJob):
                 self.circuits[-1].z(q[2])
                 self.circuits[-1].rzz(np.pi/2,q[0],q[1])
                 self.circuits[-1].rzz(np.pi/2,q[2],q[1])
+                uu=0.4352296958477135
+                ee=np.arccos((uu-1)/(uu+1))
+                gg=np.arctan(-0.24962826978506297)
+                for kk in range(4):
+                    self.circuits[-1].sdg(q[kk])
+                    if par%2:
+                        self.circuits[-1].rx(-gg-ee,q[kk])
+                    else:
+                        self.circuits[-1].rx(-gg,q[kk])
+                    par//=2     
+                self.circuits[-1].measure([q[0],q[1],q[2],q[3]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(16):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(16*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class PB4R(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,j)
+        c.sx(j)
+        c.cz(i,j)
+        c.z(j)
+        c.sx(j)
+        c.rz(np.pi/2,j)
+
+
+
+    def add_witness_circuits(self, qubits_list: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        m0=0.6239252162873192
+        m1=0.634363675729652
+        m3= -0.34728591703779504 
+        m4=0.29612926775785664
+        aa=np.arccos(np.sqrt(m0*m0+m1*m1))
+        ap=m0/np.sqrt(m0*m0+m1*m1)
+        be=m1/np.sqrt(2*(m0*m0+m1*m1))
+        de=m4/np.sqrt(m3*m3+m4*m4)
+        ga=m3/np.sqrt(2*(m3*m3+m4*m4))
+        xx=(de/ga-ap/be)/2
+        t=xx+np.sqrt(xx*xx+1)
+        #print(xx)
+        ss=np.sqrt(t)/np.sqrt(2*np.sqrt(xx*xx+1))
+        cc=np.sqrt(np.sqrt(xx*xx+1)-xx)/np.sqrt(2*np.sqrt(xx*xx+1))
+        tt=np.arctan(t)
+        ab00=cc*ap+ss*be
+        ab01=cc*be
+        ab10=cc*be-ss*ap
+        ab11=-ss*be
+        gd00=-ss*ga
+        gd01=cc*ga+ss*de
+        gd10=-cc*ga
+        gd11=-ss*ga+cc*de
+        ab0=np.arctan2(ab01,ab00)
+        ab1=np.arctan2(ab11,ab10)
+        gd0=np.arctan2(gd01,gd00)
+        gd1=np.arctan2(gd11,gd10)
+        abm=(ab0+ab1)/2
+        cm=np.cos(abm)
+        sm=np.sin(abm)
+        abx00=cm*ab00+sm*ab01
+        abx01=cm*ab01-sm*ab00
+        abx10=cm*ab10+sm*ab11
+        abx11=cm*ab11-sm*ab10
+        gdx00=cm*gd00+sm*gd01
+        gdx01=cm*gd01-sm*gd00
+        gdx10=cm*gd10+sm*gd11
+        gdx11=cm*gd11-sm*gd10
+        aby11=-abx11
+        gdy11=-gdx11
+        cr=np.cos((ab0-ab1)/2)
+        sr=np.sin((ab0-ab1)/2)
+        abz00=cr*abx00+sr*abx01
+        abz01=cr*abx01-sr*abx00
+        abz10=cr*abx10+sr*aby11
+        abz11=cr*aby11-sr*abx10
+        gdz00=cr*gdx00+sr*gdx01
+        gdz01=cr*gdx01-sr*gdx00
+        gdz10=cr*gdx10+sr*gdy11
+        gdz11=cr*gdy11-sr*gdx10
+        bb=np.arctan2(abz10,abz00)
+        cc=np.arctan2(gdz01,gdz11)
+        aa=np.arccos(np.sqrt(m0*m0+m1*m1))
+        for s in range(16 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(4, "cr"+str(i)))
+            qreg = QuantumRegister(156)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                par=self.indices_list[i][s]
+                
+                self.circuits[-1].sdg(q[1])
+                self.circuits[-1].rx(2*aa,q[1])
+                self.circuits[-1].s(q[1])
+                self.cx0(self.circuits[-1],q[1],q[2])
+                self.circuits[-1].rz(np.pi/2,q[0])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].cz(q[1],q[0])
+                self.circuits[-1].rz(np.pi/2,q[3])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].cz(q[2],q[3])
+                self.circuits[-1].s(q[1])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].z(q[2])
+                self.circuits[-1].rzz((bb+cc+np.pi),q[1],q[2])
+                self.circuits[-1].rz((bb-cc),q[1])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].z(q[1])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].rx((ab0-ab1),q[2])
+                self.circuits[-1].cz(q[1],q[2])
+                self.circuits[-1].rx(2*abm,q[2])
+                self.circuits[-1].s(q[1])
+                self.circuits[-1].rx(np.pi/2-2*tt,q[1])
+                #self.circuits[-1].sx(1)
+                t=np.pi/4
+
+
+                #1-0
+                #self.circuits[-1].sdg(q[1])
+                #self.circuits[-1].sx(q[1])
+                #self.circuits[-1].sdg(q[1])
+                self.circuits[-1].rzz(t,q[1],q[0])
+                self.circuits[-1].z(q[0])
+                self.circuits[-1].z(q[1])
+                self.circuits[-1].sdg(q[1])
+                self.circuits[-1].sdg(q[0])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].rzz(t,q[1],q[0])
+                self.circuits[-1].z(q[0])
+                self.circuits[-1].z(q[1])
+                self.circuits[-1].sdg(q[1])
+                self.circuits[-1].sdg(q[0])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].z(q[1])
+                #2-3
+                self.circuits[-1].s(q[2])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].rzz(t,q[2],q[3])
+                self.circuits[-1].z(q[2])
+                self.circuits[-1].z(q[3])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].sdg(q[3])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].rzz(t,q[2],q[3])
+                self.circuits[-1].z(q[2])
+                self.circuits[-1].z(q[3])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].sdg(q[3])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].sx(q[3])
+                #self.circuits[-1].z(q[2])
+                self.circuits[-1].z(q[3])
+                
+                #self.circuits[-1].z(q[2])
+                self.circuits[-1].rzz(np.pi/2,q[0],q[1])
+                self.circuits[-1].rzz(np.pi/2,q[2],q[1])
+                uu=0.4352296958477135
+                ee=np.arccos((uu-1)/(uu+1))
+                gg=np.arctan(-0.24962826978506297)
+                for kk in range(4):
+                    self.circuits[-1].sdg(q[kk])
+                    if par%2:
+                        self.circuits[-1].rx(-gg-ee,q[kk])
+                    else:
+                        self.circuits[-1].rx(-gg,q[kk])
+                    par//=2     
+                self.circuits[-1].measure([q[0],q[1],q[2],q[3]],cr[i])
+
+    def _get_angles_lists(self):
+        for v in self.qubits_list:
+            self.va = []
+            for n in range(self.n_repetitions):
+                for i in range(16):
+                    self.va.append(i)
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+    def update_status(self) -> bool:
+        status_before_update = self.last_status
+        try:
+            self.last_status = self.queued_job.status().name
+        except:
+            self.last_status = self.queued_job.status()
+        
+        if_changed = None
+        if self.last_status == status_before_update:
+            if_changed = False
+        else:
+            if_changed = True
+        return if_changed
+
+    def save_to_file(self, csv_path, zip_filename):
+        result_counts=[]
+        job_result = self.queued_job.result()
+        for idx, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(getattr(pub_result.data, "cr"+str(i)).get_counts())
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i=[]
+        indices_q=[]
+        #qubits_list=self.qubits_list
+        for s in range(16*self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva=self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+        
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+        csv_filename = csv_path.split('/')[-1]
+        with ZipFile(zip_filename + '.zip', 'a') as plik_zip:
+            plik_zip.write(csv_path, arcname='results/' + csv_filename)
+        self.if_saved = True
+
+        try:
+            os.remove(csv_path)
+        except Exception as alert:
+            print(alert)
+class PB4CZ(WitnessJob):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.indices_list = []
+        self.n_repetitions = 1
+        self.qubits_list = []
+    @staticmethod
+    def cx0(c: QuantumCircuit,i,j):
+        c.rz(np.pi/2,j)
+        c.sx(j)
+        c.cz(i,j)
+        c.z(j)
+        c.sx(j)
+        c.rz(np.pi/2,j)
+
+
+
+    def add_witness_circuits(self, qubits_list: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        m0=0.6239252162873192
+        m1=0.634363675729652
+        m3= -0.34728591703779504 
+        m4=0.29612926775785664
+        aa=np.arccos(np.sqrt(m0*m0+m1*m1))
+        ap=m0/np.sqrt(m0*m0+m1*m1)
+        be=m1/np.sqrt(2*(m0*m0+m1*m1))
+        de=m4/np.sqrt(m3*m3+m4*m4)
+        ga=m3/np.sqrt(2*(m3*m3+m4*m4))
+        xx=(de/ga-ap/be)/2
+        t=xx+np.sqrt(xx*xx+1)
+        #print(xx)
+        ss=np.sqrt(t)/np.sqrt(2*np.sqrt(xx*xx+1))
+        cc=np.sqrt(np.sqrt(xx*xx+1)-xx)/np.sqrt(2*np.sqrt(xx*xx+1))
+        tt=np.arctan(t)
+        ab00=cc*ap+ss*be
+        ab01=cc*be
+        ab10=cc*be-ss*ap
+        ab11=-ss*be
+        gd00=-ss*ga
+        gd01=cc*ga+ss*de
+        gd10=-cc*ga
+        gd11=-ss*ga+cc*de
+        ab0=np.arctan2(ab01,ab00)
+        ab1=np.arctan2(ab11,ab10)
+        gd0=np.arctan2(gd01,gd00)
+        gd1=np.arctan2(gd11,gd10)
+        abm=(ab0+ab1)/2
+        cm=np.cos(abm)
+        sm=np.sin(abm)
+        abx00=cm*ab00+sm*ab01
+        abx01=cm*ab01-sm*ab00
+        abx10=cm*ab10+sm*ab11
+        abx11=cm*ab11-sm*ab10
+        gdx00=cm*gd00+sm*gd01
+        gdx01=cm*gd01-sm*gd00
+        gdx10=cm*gd10+sm*gd11
+        gdx11=cm*gd11-sm*gd10
+        aby11=-abx11
+        gdy11=-gdx11
+        cr=np.cos((ab0-ab1)/2)
+        sr=np.sin((ab0-ab1)/2)
+        abz00=cr*abx00+sr*abx01
+        abz01=cr*abx01-sr*abx00
+        abz10=cr*abx10+sr*aby11
+        abz11=cr*aby11-sr*abx10
+        gdz00=cr*gdx00+sr*gdx01
+        gdz01=cr*gdx01-sr*gdx00
+        gdz10=cr*gdx10+sr*gdy11
+        gdz11=cr*gdy11-sr*gdx10
+        bb=np.arctan2(abz10,abz00)
+        cc=np.arctan2(-gdz01,-gdz11)
+        aa=np.arccos(np.sqrt(m0*m0+m1*m1))
+        for s in range(16 * self.n_repetitions):
+            #self.circuits.append(QuantumCircuit(127, len(listvert)))
+            cr=[]
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(4, "cr"+str(i)))
+            qreg = QuantumRegister(156)
+            #self.circuits.append(QuantumCircuit(2, len(qubits_list)))  # TR: For tests
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+            for i in range(len(qubits_list)):
+                q=qubits_list[i]
+                par=self.indices_list[i][s]
+                
+                self.circuits[-1].sdg(q[1])
+                self.circuits[-1].rx(2*aa,q[1])
+                self.circuits[-1].s(q[1])
+                self.circuits[-1].s(q[2])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].cz(q[1],q[2])
+                self.circuits[-1].z(q[2])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].s(q[0])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].cz(q[1],q[0])
+                self.circuits[-1].s(q[3])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].cz(q[2],q[3])
+                self.circuits[-1].rx(bb+cc,q[1])
+                self.circuits[-1].cz(q[1],q[2])
+                self.circuits[-1].rx((bb-cc),q[1])
+                self.circuits[-1].s(q[1])
+                self.circuits[-1].sdg(q[2])
+                self.circuits[-1].rx((ab0-ab1),q[2])
+                self.circuits[-1].cz(q[1],q[2])
+                self.circuits[-1].rx(2*abm+np.pi/2,q[2])
+                self.circuits[-1].z(q[1])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].rz(-2*tt,q[1])
+                #self.circuits[-1].sx(1)
+                t=np.pi/4
+
+
+                #1-0
+                #self.circuits[-1].sdg(q[1])
+                #self.circuits[-1].sx(q[1])
+                #self.circuits[-1].sdg(q[1])
+                self.circuits[-1].cz(q[1],q[0])
+                self.circuits[-1].rx(-np.pi/4,q[0])
+                self.circuits[-1].rx(-3*np.pi/4,q[1])
+                self.circuits[-1].cz(q[1],q[0])
+                self.circuits[-1].sx(q[1])
+                self.circuits[-1].sx(q[0])
+                self.circuits[-1].z(q[1])
+                #2-3
+                self.circuits[-1].cz(q[2],q[3])
+                self.circuits[-1].rx(-np.pi/4,q[3])
+                self.circuits[-1].rx(-3*np.pi/4,q[2])
+                self.circuits[-1].cz(q[2],q[3])
+                self.circuits[-1].sx(q[3])
+                self.circuits[-1].sx(q[2])
+                self.circuits[-1].sdg(q[3])
+
+
+                self.circuits[-1].s(q[2])
+                self.circuits[-1].cz(q[0],q[1])
+                self.circuits[-1].cz(q[2],q[1])
                 uu=0.4352296958477135
                 ee=np.arccos((uu-1)/(uu+1))
                 gg=np.arctan(-0.24962826978506297)
