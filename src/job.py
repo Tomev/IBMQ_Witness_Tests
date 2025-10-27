@@ -66,7 +66,6 @@ class Job:
         return if_changed
 
     def save_to_csv(self, csv_path: str) -> None:
-
         results = self.get_counts_from_job_results(self.queued_job)
 
         results = self.queued_job.result().get_counts()
@@ -122,7 +121,6 @@ class Job:
 
 
 class RotationJob(Job):
-
     def __init__(self):
         Job.__init__(self)
         self.theta_range = np.linspace(-np.pi, 7 * np.pi / 8, 16)
@@ -161,7 +159,6 @@ class RotationJob(Job):
 
 
 class WitnessJob(Job):
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -201,7 +198,6 @@ class WitnessJob(Job):
             self.circuits[-1].measure_all()
 
     def _get_angles_lists(self) -> List[Dict[str, float]]:
-
         angles_dicts = []
 
         for n in range(self.n_repetitions):
@@ -244,7 +240,6 @@ class WitnessJob(Job):
 
 
 class WitnessJobParameterized(WitnessJob):
-
     def add_witness_circuits(self, parameters) -> None:
         angles_dicts = self._get_angles_lists(parameters)
 
@@ -265,7 +260,6 @@ class WitnessJobParameterized(WitnessJob):
             self.circuits[-1].reset(qubit=0)
 
     def _get_angles_lists(self, parameters) -> List[Dict[str, float]]:
-
         angles_dicts = []
 
         for k in range(self.n_repetitions):
@@ -306,7 +300,6 @@ class WitnessJobParameterized(WitnessJob):
 
 
 class VivianiJob(WitnessJob):
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -493,7 +486,6 @@ class Weak(TestJob):
 
 
 class LG(TestJob):
-
     def __init__(self) -> None:
         super().__init__()
         self.ep = 0
@@ -504,7 +496,6 @@ class LG(TestJob):
 
     @staticmethod
     def we(c: QuantumCircuit, i: int, j: int, eps: float):
-
         c.ecr(i, j)
         c.rz(eps, j)
         c.ecr(i, j)
@@ -595,16 +586,15 @@ class LG(TestJob):
                 self.circuits[-1].measure([q[0], q[1], q[2]], cr[i])
 
     def _get_angles_lists(self):
-        for v in self.qubits_list:
+        for _ in self.qubits_list:
             self.va = []
-            for n in range(self.n_repetitions):
+            for _ in range(self.n_repetitions):
                 for i in range(8):
                     self.va.append(i)
             random.shuffle(self.va)
             self.indices_list.append(self.va)
 
     def save_to_file(self, csv_path: str):
-
         result_counts = []
         job_result = self.queued_job.result()
 
@@ -630,7 +620,6 @@ class LG(TestJob):
 
 
 class LGSingleGate(LG):
-
     def __init__(self):
         super().__init__()
 
@@ -644,13 +633,11 @@ class LGSingleGate(LG):
 
 
 class LGZZ(LG):
-
     def __init__(self):
         super().__init__()
 
     @staticmethod
     def we(c: QuantumCircuit, i: int, j: int, eps: float):
-
         sgn: int = 1 if eps >= 0 else -1
 
         c.sx(j)
@@ -680,7 +667,6 @@ class PB(TestJob):
         c.rz(np.pi / 2, j)
 
     def _get_angles_lists(self) -> None:
-
         for _ in self.qubits_list:
             self.va: List[int] = list(range(self.n_circuts)) * self.n_repetitions
             random.shuffle(self.va)
@@ -826,6 +812,121 @@ class PB(TestJob):
         for s in range(self.n_circuts * self.n_repetitions):
             for q in range(len(self.qubits_list)):
                 iva = self.indices_list[q][s]
+                indices_i.append(iva)
+                indices_q.append(q)
+        pandas_table["i"] = indices_i
+        pandas_table["q"] = indices_q
+
+        # Saving to file
+        pandas_table.to_csv(csv_path)
+
+
+class VivianiPPCZ(VivianiJob):
+    """
+    A class used in our PP paper.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    @staticmethod
+    def cx0(c: QuantumCircuit, i, j):
+        c.rz(np.pi / 2, j)
+        c.sx(j)
+        c.cz(i, j)
+        c.z(j)
+        c.sx(j)
+        c.rz(np.pi / 2, j)
+
+    @staticmethod
+    def cx1(c: QuantumCircuit, i, j):
+        c.rz(np.pi / 2, i)
+        c.rz(-np.pi / 2, j)
+        c.sx(i)
+        c.rz(np.pi / 2, i)
+        c.sx(i)
+        c.sx(j)
+        c.ecr(j, i)
+        c.rz(np.pi / 2, i)
+        c.rz(np.pi / 2, j)
+        c.sx(i)
+        c.sx(j)
+        c.rz(-3 * np.pi / 2, i)
+        c.rz(np.pi / 2, j)
+
+    @staticmethod
+    def sw0(c: QuantumCircuit, i, j):
+        # c.rz(-np.pi,j)
+        VivianiPPCZ.cx0(c, i, j)
+        VivianiPPCZ.cx0(c, j, i)
+
+    def add_witness_circuits(self, qubits_list: List[int]) -> None:
+        self.qubits_list = qubits_list
+        self._get_angles_lists()
+
+        self.circuits.clear()
+        for s in range(25 * self.n_repetitions):
+            cr = []
+
+            for i in range(len(qubits_list)):
+                cr.append(ClassicalRegister(1, "cr" + str(i)))
+
+            qreg = QuantumRegister(133)  #
+            self.circuits.append(QuantumCircuit(qreg, *cr))
+
+            for i in range(len(qubits_list)):
+                q = qubits_list[i]
+                qq = len(q)
+                m = (qq - 1) // 2
+                par = self.indices_list[i][s]
+                self.s_gate(self.circuits[-1], self.alphas[par[0]], q[0])
+                self.s_gate(self.circuits[-1], self.betas[par[0]], q[0])
+                self.s_gate(self.circuits[-1], self.alphas[par[1]], q[-1])
+                self.s_gate(self.circuits[-1], self.betas[par[1]], q[-1])
+                self.cx0(self.circuits[-1], q[0], q[1])
+
+                for j in range(m):
+                    self.cx0(self.circuits[-1], q[j + 1], q[j + 2])
+                    self.cx0(self.circuits[-1], q[j + 1], q[j])
+
+                for j in reversed(range(m + 1, qq - 1)):
+                    self.sw0(self.circuits[-1], q[j + 1], q[j])
+
+                self.circuits[-1].sx(q[m])
+                self.circuits[-1].rz(np.pi / 4, q[m])
+                self.circuits[-1].sx(q[m])
+                self.cx0(self.circuits[-1], q[m + 1], q[m])
+                self.circuits[-1].z(q[m])
+                self.circuits[-1].sx(q[m])
+                self.circuits[-1].rz(-np.pi / 4, q[m])
+                self.circuits[-1].sx(q[m])
+                self.circuits[-1].z(q[m])
+                self.circuits[-1].measure(q[m], cr[i])
+
+    def _get_angles_lists(self):
+        for _ in self.qubits_list:
+            self.va = []
+            for _ in range(self.n_repetitions):
+                for i in range(len(self.alphas)):
+                    for j in range(len(self.alphas)):
+                        self.va.append([i, j])
+            random.shuffle(self.va)
+            self.indices_list.append(self.va)
+
+    def save_to_file(self, csv_path):
+        result_counts = []
+        job_result = self.queued_job.result()
+        for _, pub_result in enumerate(job_result):
+            for i in range(len(self.qubits_list)):
+                result_counts.append(
+                    getattr(pub_result.data, "cr" + str(i)).get_counts()
+                )
+        pandas_table = pd.DataFrame.from_dict(result_counts).fillna(0)
+        indices_i = []
+        indices_q = []
+        for s in range(25 * self.n_repetitions):
+            for q in range(len(self.qubits_list)):
+                iva = self.indices_list[q][s][0] + self.indices_list[q][s][1] * 5
                 indices_i.append(iva)
                 indices_q.append(q)
         pandas_table["i"] = indices_i
