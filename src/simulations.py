@@ -49,7 +49,6 @@ def prepare_jobs(backend_name: str) -> List[Job]:
 
 
 def simulate_job(job: Job, backend: Optional[IBMBackend] = None) -> str:
-
     # simulator: AerSimulator = AerSimulator(device="GPU")  # May work sometime.
     simulator: AerSimulator = AerSimulator()
 
@@ -81,7 +80,6 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
     backend: Optional[IBMBackend] = None
 
     if backend_name != "noiseless_simulator":
-
         service: QiskitRuntimeService = QiskitRuntimeService(
             channel="ibm_cloud",
             token=os.environ.get("IBMQ_TOKEN_AB_PAID"),

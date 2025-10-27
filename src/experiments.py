@@ -17,7 +17,6 @@ from utils import *
 
 
 def enqueue_jobs():
-
     service = QiskitRuntimeService(
         channel="ibm_quantum",
         token=TOKENS[TOKEN_VARIABLES[0]],
@@ -79,7 +78,6 @@ def enqueue_jobs():
     job_list_path: str = f"{RESULTS_FOLDER_NAME}/job_list.csv"
 
     while i < N_JOBS:
-
         service = QiskitRuntimeService(
             channel="ibm_quantum",
             token=TOKENS[TOKEN_VARIABLES[i % len(TOKEN_VARIABLES)]],

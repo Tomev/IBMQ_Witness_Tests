@@ -5,7 +5,7 @@ import pandas as pd
 
 # Settings
 # results_path = "LGSingleGate_sim/results"
-results_path = "LGZZ_sim/results_fez"
+results_path = "lg_sim_results"
 # results_path = "LG_Sim/results"
 # results_path = "LG_noiseless_sim/results"
 states_order = ["000", "100", "010", "110", "001", "101", "011", "111"]
@@ -86,22 +86,21 @@ class BellResult:
 
 
 def main():
-    lg_analysis_results_ab = {"fez": [], "kingston": []}
+    lg_analysis_results_ab = {"pittsburgh": []}
 
-    lg_analysis_results_ba = {"fez": [], "kingston": []}
+    lg_analysis_results_ba = {"pittsburgh": []}
 
-    lg_analysis_results_mean = {"fez": [], "kingston": []}
+    lg_analysis_results_mean = {"pittsburgh": []}
 
-    order_analysis_results_abc_bac = {"fez": [], "kingston": []}
+    order_analysis_results_abc_bac = {"pittsburgh": []}
 
-    order_analysis_results_abc_bac_module = {"fez": [], "kingston": []}
+    order_analysis_results_abc_bac_module = {"pittsburgh": []}
 
     files = listdir(results_path)
 
     weak_meas_rotation_angle = 0.1  # That's our weak measurement rotation angle.
 
     for f in files:
-
         f_split = f.split("_")
 
         if len(f_split) > 2:
@@ -141,7 +140,6 @@ def main():
         # print("xxC")
 
         for steering_bit in range(8):
-
             # TR:   What is s? 000 + 110 + 101 + 011 - 111 - 100 - 010 - 001
             #       Do I add counts multiplied by -1 for every 1 in the state?
             #       If I remember correctly that's exactly it. Especially since ss is used
@@ -306,7 +304,7 @@ def main():
             (qubit_set, abs(ABC - BAC))
         )
 
-    backends = ["fez", "kingston"]
+    backends = ["pittsburgh"]
 
     # Prepare results for saving
     for backend in backends:
@@ -357,5 +355,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    find_non_overlaping_triplets()
+    main()
+    # find_non_overlaping_triplets()

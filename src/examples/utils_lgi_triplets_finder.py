@@ -9,7 +9,6 @@ from src.utils import find_lgi_triplets
 
 
 def main():
-
     print("\tGetting backend...")
     backend_name = "ibm_sherbrooke"
 

@@ -26,7 +26,6 @@ def load_json(json_file_path):
 
 
 class WitnessResult:
-
     def __init__(self, results_table: pd.DataFrame) -> None:
         self.raw_results = results_table
 
@@ -76,7 +75,6 @@ def std_dev(P: np.array, n: float) -> float:
 
 
 def plot_results(qubits, vb, erb, va, er) -> None:
-
     _, ax = plt.subplots(1, 1, figsize=(5, 3), tight_layout=True)
     ax.axhline(0, color="black", linewidth=1)
 
@@ -126,7 +124,6 @@ def plot_results(qubits, vb, erb, va, er) -> None:
 
 
 def main() -> None:
-
     results_path = "k:\\Coding\\Python\\IBMQ_Witness_Tests\\simulations\\"
 
     # fig,ax=plt.subplots(1,1, figsize=(5, 3),tight_layout=True)

@@ -119,7 +119,6 @@ def main():
     inequality_values_mean = []
 
     for qubit_set_idx in range(n_qubit_sets):
-
         counts_per_steering_bit = summed_result.Calculate(qubit_set_idx)
 
         n_shots = 0
@@ -142,7 +141,6 @@ def main():
         print("xxC")
 
         for steering_bit in range(8):
-
             # TR:   What is s? 000 + 110 + 101 + 011 - 111 - 100 - 010 - 001
             #       Do I add counts multiplied by -1 for every 1 in the state?
             #       If I remember correctly that's exactly it. Especially since ss is used

@@ -7,9 +7,7 @@ import pandas as pd
 from src.utils import ExperimentSetup
 
 
-
 class PolygamyResults:
-
     def __init__(self, results_table: pd.DataFrame) -> None:
         self.raw_results = results_table
 
@@ -56,9 +54,7 @@ def prepare_results(results_path: str, exp_setup: ExperimentSetup) -> PolygamyRe
 
 
 def analyze_polygamy_results(results_path: str, setups: List[ExperimentSetup]):
-
     minimal_violations: List[Tuple[Tuple[int, ...], float]] = []
-
 
     for setup in setups:
         results: PolygamyResults = prepare_results(results_path, setup)
@@ -80,9 +76,9 @@ def analyze_polygamy_results(results_path: str, setups: List[ExperimentSetup]):
 
             for k in range(32):
                 for m in range(32):
-                    aa[m % pj + ((m // pj) // 2) * pj][k % pj + ((k // pj) // 2) * pj] += b[
-                        m
-                    ][k]
+                    aa[m % pj + ((m // pj) // 2) * pj][
+                        k % pj + ((k // pj) // 2) * pj
+                    ] += b[m][k]
 
             p = [0, 3, 5, 9, 6, 10, 12, 15]
             r = [1, 2, 4, 7, 8, 11, 13, 14]
@@ -166,12 +162,20 @@ def analyze_polygamy_results(results_path: str, setups: List[ExperimentSetup]):
     analysis_results_file_path: str = f"{setups[0].backend}_polygamy_results.csv"
     save_to_file(analysis_results_file_path, minimal_violations)
 
-    greedy_nonoverlapping_maximal_minimal_violations: List[Tuple[Tuple[int, ...], float]] = find_greedy_nonoverlapping_maximal_minimal_violations(minimal_violations)
-    analysis_results_file_path = f"{setups[0].backend}_greedy_nonoverlaping_polygamy_results.csv"
-    save_to_file(analysis_results_file_path, greedy_nonoverlapping_maximal_minimal_violations)
+    greedy_nonoverlapping_maximal_minimal_violations: List[
+        Tuple[Tuple[int, ...], float]
+    ] = find_greedy_nonoverlapping_maximal_minimal_violations(minimal_violations)
+    analysis_results_file_path = (
+        f"{setups[0].backend}_greedy_nonoverlaping_polygamy_results.csv"
+    )
+    save_to_file(
+        analysis_results_file_path, greedy_nonoverlapping_maximal_minimal_violations
+    )
 
 
-def find_greedy_nonoverlapping_maximal_minimal_violations(sorted_minimal_violations: List[Tuple[Tuple[int, ...], float]]) -> List[Tuple[Tuple[int, ...], float]]:
+def find_greedy_nonoverlapping_maximal_minimal_violations(
+    sorted_minimal_violations: List[Tuple[Tuple[int, ...], float]],
+) -> List[Tuple[Tuple[int, ...], float]]:
     nonoverlapping_violations: List[Tuple[Tuple[int, ...], float]] = []
 
     qubits_used: List[int] = []
@@ -184,18 +188,20 @@ def find_greedy_nonoverlapping_maximal_minimal_violations(sorted_minimal_violati
     return nonoverlapping_violations
 
 
-def save_to_file(file_path: str, minimal_violations: List[Tuple[Tuple[int, ...], float]]) -> None:
+def save_to_file(
+    file_path: str, minimal_violations: List[Tuple[Tuple[int, ...], float]]
+) -> None:
     with open(file_path, "w") as f:
         f.write("Qubit Group, Minimal Violation\n")
         for group, violation in minimal_violations:
             f.write(f"{str(group).replace(',', ';')}, {violation}\n")
+
 
 def prepare_setups(results_path: str, backend: str) -> List[ExperimentSetup]:
     setups: List[ExperimentSetup] = []
 
     # Iterate through all files in the results directory.
     for file_name in os.listdir(results_path):
-
         if not backend in file_name:
             continue
 
@@ -209,9 +215,8 @@ def prepare_setups(results_path: str, backend: str) -> List[ExperimentSetup]:
 
 
 if __name__ == "__main__":
-    backends: List[str] = ["ibm_kingston", "ibm_torino"]
+    backends: List[str] = ["ibm_pittsburgh"]
 
-    
     results_path: str = "polygamy_results/"
 
     for backend in backends:
