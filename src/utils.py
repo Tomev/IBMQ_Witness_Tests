@@ -173,9 +173,9 @@ def find_polygamy_groups(backend: IBMBackend) -> List[List[int]]:
 
     return polygamy_groups
 
-def get_predefined_pp_groups() -> List[List[int]]:
+def get_predefined_torino_pp_groups() -> List[List[int]]:
     """
-    Return list used by AB in his experiments on real devices.
+    Return list used by AB in his experiments on `ibm_torino`.
 
     :return: A List of predefined qubit triplets.
     :rtype: List[List[int]]
@@ -184,3 +184,17 @@ def get_predefined_pp_groups() -> List[List[int]]:
             [38,53,57],[40,41,42],[46,47,48],[50,56,69],[59,72,78],[61,62,63],[65,66,67],[71,75,90],\
             [76,91,95],[80,81,82],[84,85,86],[88,94,107],[97,98,99],[101,111,120],[103,104,105],[109,113,128],\
             [129,114,115],[117,118,130],[131,122,123],[125,126,132]]
+
+def get_predefined_pittsburgh_pp_groups() -> List[List[int]]:
+    """
+    Return list used by AB in his experiments on `ibm_pittsburgh`.
+
+    :return: A List of predefined qubit triplets.
+    :rtype: List[List[int]]
+    """
+    return [
+        [0,1,2],[4,5,6],[8,9,10],[12,13,14],[20,21,22],[24,25,26],[28,29,30],[32,33,34],
+        [40,41,42],[44,45,46],[48,49,50],[52,53,54],[60,61,62],[64,65,66],[68,69,70],
+        [72,73,74],[80,81,82],[84,85,86],[88,89,90],[92,93,94],[100,101,102],[104,105,106],[108,109,110],
+        [112,113,114],[120,121,122],[124,125,126],[128,129,130],[132,133,134],[140,141,142],[144,145,146],[148,149,150],[152,153,154]
+        ] 
