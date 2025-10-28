@@ -826,8 +826,9 @@ class VivianiPPCZ(VivianiJob):
     A class used in our PP paper.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, n_qubits: int) -> None:
         super().__init__()
+        self.n_qubits: int = n_qubits
 
     @staticmethod
     def cx0(c: QuantumCircuit, i, j):
@@ -871,7 +872,7 @@ class VivianiPPCZ(VivianiJob):
             for i in range(len(qubits_list)):
                 cr.append(ClassicalRegister(1, "cr" + str(i)))
 
-            qreg = QuantumRegister(133)  #
+            qreg = QuantumRegister(self.n_qubits)  #
             self.circuits.append(QuantumCircuit(qreg, *cr))
 
             for i in range(len(qubits_list)):
