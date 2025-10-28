@@ -12,11 +12,11 @@ from qiskit_ibm_runtime import IBMBackend, QiskitRuntimeService
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from tqdm import tqdm
 
-from src.job import PB, Job
-from src.utils import *
+from job import VivianiPPCZ, Job
+from utils import *
 
 # Create folder for results.
-RESULTS_DIR: str = "polygamy_results"
+RESULTS_DIR: str = "pp_sim_results"
 
 
 def prepare_jobs(backend_name: str) -> List[Job]:
@@ -24,7 +24,7 @@ def prepare_jobs(backend_name: str) -> List[Job]:
 
     # Prepare circuits. This is the part to modify.
     if backend_name != "noiseless_simulator":
-        print("\tGet target device for Polygamy qubit groups extraction...")
+        print("\tGet target device for PP qubit groups extraction...")
 
         service: QiskitRuntimeService = QiskitRuntimeService(
             channel="ibm_cloud",
@@ -34,15 +34,15 @@ def prepare_jobs(backend_name: str) -> List[Job]:
 
         backend: IBMBackend = service.backend(backend_name, use_fractional_gates=True)
 
-        print("\tExtracting Polygamy qubit groups...")
-        qubits: List[Tuple[int]] = find_polygamy_groups(backend)
+        print("\tExtracting PP qubit groups...")
+        qubits: List[Tuple[int]] = get_predefined_pp_groups()
     else:
-        qubits: List[Tuple[int]] = [(0, 1, 2, 3, 4)]
+        qubits: List[Tuple[int]] = [(0, 1, 2)]
 
-    print("\tPreparing Polygamy jobs...")
+    print("\tPreparing PP jobs...")
     for q_list in qubits:
-        job: PB = PB()
-        job.add_test_circuits([q_list])
+        job: VivianiPPCZ = VivianiPPCZ()
+        job.add_witness_circuits([q_list])
         jobs.append(job)
 
     return jobs
@@ -60,7 +60,7 @@ def simulate_job(job: Job, backend: Optional[IBMBackend] = None) -> str:
 
     sampler: Sampler = Sampler(mode=simulator)
 
-    n_shots: int = 60000
+    n_shots: int = 3200000
     results_file: str = f"{backend_name}_{job.qubits_list[0]}.csv"
     results_path: str = os.path.join(RESULTS_DIR, results_file)
 
@@ -100,16 +100,16 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
 
     print("\tRunning the circuits...\n")
 
-    with Pool() as pool:
-        pool.starmap(simulate_job, [(job, backend) for job in jobs])
+    # with Pool() as pool:
+    #    pool.starmap(simulate_job, [(job, backend) for job in jobs])
 
     # TR: Sequential execution.
-    """        
+           
     for job in tqdm(jobs):
         simulate_job(job, backend)
         
         # print(f"\n\t{backend_name} job {j}.")
-
+    """
         print(f"\t\tRunning the job...")
         job.queued_job = sampler.run(job.circuits, shots=n_shots)
         results_csv = f"{backend_name}_{str(job.qubits_list[0])}.csv"
@@ -120,7 +120,8 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
 
 
 def main() -> None:
-    backends = ["ibm_torino", "ibm_kingston"]
+    # backends = ["ibm_torino", "ibm_kingston"]
+    backends = ["noiseless_simulator", "ibm_torino"]
     # backends = ["noiseless_simulator"]
 
     for backend in backends:

@@ -13,7 +13,7 @@ from zipfile import ZipFile
 from qiskit_ibm_runtime.ibm_backend import IBMBackend
 from tqdm import tqdm
 
-from src.settings import *
+from settings import *
 
 
 @dataclass
@@ -172,3 +172,15 @@ def find_polygamy_groups(backend: IBMBackend) -> List[List[int]]:
     #    print(g)
 
     return polygamy_groups
+
+def get_predefined_pp_groups() -> List[List[int]]:
+    """
+    Return list used by AB in his experiments on real devices.
+
+    :return: A List of predefined qubit triplets.
+    :rtype: List[List[int]]
+    """
+    return [[0,1,2],[4,5,6],[8,9,10],[12,13,14],[20,21,22],[25,35,44],[27,28,29],[31,32,33],\
+            [38,53,57],[40,41,42],[46,47,48],[50,56,69],[59,72,78],[61,62,63],[65,66,67],[71,75,90],\
+            [76,91,95],[80,81,82],[84,85,86],[88,94,107],[97,98,99],[101,111,120],[103,104,105],[109,113,128],\
+            [129,114,115],[117,118,130],[131,122,123],[125,126,132]]

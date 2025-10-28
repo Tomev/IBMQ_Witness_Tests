@@ -913,7 +913,7 @@ class VivianiPPCZ(VivianiJob):
             random.shuffle(self.va)
             self.indices_list.append(self.va)
 
-    def save_to_file(self, csv_path):
+    def save_to_csv(self, csv_path):
         result_counts = []
         job_result = self.queued_job.result()
         for _, pub_result in enumerate(job_result):
