@@ -34,7 +34,6 @@ def prepare_jobs(backend_name: str) -> List[Job]:
         )
 
         backend: IBMBackend = service.backend(backend_name, use_fractional_gates=True)
-        
 
         print("\tExtracting PP qubit groups...")
         # qubits: List[Tuple[int]] = get_predefined_torino_pp_groups()
@@ -75,6 +74,7 @@ def simulate_job(job: Job, backend: Optional[IBMBackend] = None) -> str:
 
     del job
 
+
 def simulate_job_name(job: Job, backend_name: Optional[IBMBackend] = None) -> str:
     # simulator: AerSimulator = AerSimulator(device="GPU")  # May work sometime.
     simulator: AerSimulator = AerSimulator()
@@ -88,7 +88,6 @@ def simulate_job_name(job: Job, backend_name: Optional[IBMBackend] = None) -> st
         )
 
         backend = service.backend(backend_name, use_fractional_gates=True)
-
 
     if backend:
         simulator = simulator.from_backend(backend)
@@ -131,7 +130,9 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
 
     print(f"\tRunning circuits transpilation...")
     # pm = generate_preset_pass_manager(optimization_level=0, backend=backend)
-    pm = generate_preset_pass_manager(optimization_level=0, backend=backend, scheduling_method=SCHEDULING)
+    pm = generate_preset_pass_manager(
+        optimization_level=0, backend=backend, scheduling_method=SCHEDULING
+    )
 
     for job in tqdm(jobs):
         for i in range(len(job.circuits)):
