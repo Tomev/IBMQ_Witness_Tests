@@ -15,7 +15,7 @@ from job import VivianiPPCZ, Job
 from utils import *
 
 # Create folder for results.
-SCHEDULING = "asap"  # "asap" or "alap"
+SCHEDULING = "alap"  # "asap" or "alap"
 RESULTS_DIR: str = "pp_sim_results"
 
 
@@ -139,8 +139,10 @@ def simulate_jobs(jobs: List[Job], backend_name: str = "noiseless_simulator") ->
 
     print("\tRunning the circuits...\n")
 
-    with NonDeamonicPool(4) as pool:
+    n_workers: int = 4
+    with NonDeamonicPool(n_workers) as pool:
         # TR: Watch out for RAM!
+        # TIP TR: 3 200 000, shots for 8 workers was too much. 4 was good. 6 and 5 ran, but got stuck on saving results.
         pool.starmap(simulate_job_name, [(job, backend_name) for job in jobs])
 
     # TR: Sequential execution.
